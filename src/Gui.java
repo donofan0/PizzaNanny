@@ -1,5 +1,4 @@
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -21,21 +20,18 @@ public class Gui {
 		frame.setSize(1000, 800);
 		frame.setVisible(true);
 
-		JPanel masterPanel = new JPanel(new BorderLayout());
-		JPanel topPanel = new JPanel();
-		JLayeredPane leftPanel = new JLayeredPane();
+		JLayeredPane masterPanel = new JLayeredPane();
+		JPanel mapPanel = new JPanel();
+		JPanel pointsPanel = new JPanel();
+		JPanel linesPanel = new JPanel();
 		JPanel rightPanel = new JPanel();
-		JPanel centrePanel = new JPanel();
-		JPanel bottomPanel = new JPanel();
 
-		masterPanel.add(topPanel, BorderLayout.PAGE_START);
-		masterPanel.add(leftPanel, BorderLayout.LINE_START);
-		masterPanel.add(rightPanel, BorderLayout.LINE_END);
-		masterPanel.add(centrePanel, BorderLayout.CENTER);
-		masterPanel.add(bottomPanel, BorderLayout.PAGE_END);
+		pointsPanel.setOpaque(false);
+		// pointsPanel.setBackground(new Color(0, 0, 0, 65));
 
-		Dimension layeredPaneSize = new Dimension(300, 310);
-		// leftPanel.setPreferredSize(layeredPaneSize);
+		masterPanel.add(mapPanel, JLayeredPane.DEFAULT_LAYER);
+		masterPanel.add(pointsPanel, JLayeredPane.PALETTE_LAYER);
+
 		BufferedImage myPicture = null;
 		try {
 			// TODO: fix directory
@@ -44,10 +40,16 @@ public class Gui {
 			e.printStackTrace();
 		}
 		JLabel picLabel = new JLabel(new ImageIcon(myPicture));
-		picLabel.setBounds(0, 0, 300, 300);
-		leftPanel.add(picLabel, 0);
-		// leftPanel.add(new Map());
-		frame.getContentPane().add(leftPanel);
+		picLabel.setBounds(0, 0, 400, 400);
+		mapPanel.add(picLabel, 0);
+
+		pointsPanel.add(new Map());
+
+		pointsPanel.setBounds(0, 0, 400, 400);
+		mapPanel.setBounds(0, 0, 400, 400);
+
+		frame.getContentPane().setLayout(new BorderLayout());
+		frame.getContentPane().add(new Map());
 		frame.validate();
 	}
 }
