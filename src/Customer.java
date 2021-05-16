@@ -1,11 +1,11 @@
+import java.awt.Point;
 
 public class Customer {
 	String address;
 	int waitTime;
 	double latitude;
 	double longitude;
-	long x;
-	long y;
+	Point location;
 
 	public Customer() {
 
@@ -16,15 +16,6 @@ public class Customer {
 		this.waitTime = waitTime;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		this.x = Points.latitudeToX(latitude);
-		this.y = Points.longitudeToY(longitude);
-
-		if (x > Main.largestDistance) {
-			Main.largestDistance = x;
-		}
-
-		if (y > Main.largestDistance) {
-			Main.largestDistance = y;
-		}
+		location = Points.latLongtoPoint(latitude, longitude);
 	}
 }
