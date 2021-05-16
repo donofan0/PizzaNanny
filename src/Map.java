@@ -1,6 +1,7 @@
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -20,6 +21,7 @@ public class Map extends JLayeredPane {
 		JPanel mapImagePanel = new JPanel();
 		JPanel pointsPanel = new JPanel();
 
+		this.setBounds(frame);
 		this.add(mapImagePanel, JLayeredPane.DEFAULT_LAYER);
 		this.add(pointsPanel, JLayeredPane.PALETTE_LAYER);
 
@@ -30,7 +32,7 @@ public class Map extends JLayeredPane {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		JLabel picLabel = new JLabel(new ImageIcon(myPicture));
+		JLabel picLabel = new JLabel(new ImageIcon(myPicture.getScaledInstance(frame.width, -1, Image.SCALE_SMOOTH)));
 		picLabel.setBounds(frame);
 		mapImagePanel.setBounds(frame);
 		mapImagePanel.add(picLabel, 0);
@@ -47,7 +49,7 @@ public class Map extends JLayeredPane {
 class Points extends JComponent {
 	final static double earthRadius = 6371.0070072;
 	final static Point2D.Double topLeftMap = new Point2D.Double(-6.713, 53.41);
-	final static Point bottomRigthMap = new Point(longitudeToX(-6.456531), latitudeToY(53.2944));
+	final static Point bottomRigthMap = new Point(longitudeToX(-6.453), latitudeToY(53.2944));
 	final static Point apachePizza = new Point(longitudeToX(-6.592963), latitudeToY(53.381176));
 	double scaleFactor = 1.0;
 
@@ -95,7 +97,7 @@ class Points extends JComponent {
 
 		// scale factors = pixels per meter
 
-		scaleFactor = (double) 800 / bottomRigthMap.y;
+		scaleFactor = (double) g2.getClipBounds().width / bottomRigthMap.x;
 		for (Customer customer : Main.customers) {
 			int x = (int) Math.round(customer.location.x * scaleFactor);
 			int y = (int) Math.round(customer.location.y * scaleFactor);
