@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -23,11 +24,6 @@ public class Gui {
 		JLayeredPane masterPanel = new JLayeredPane();
 		JPanel mapPanel = new JPanel();
 		JPanel pointsPanel = new JPanel();
-		JPanel linesPanel = new JPanel();
-		JPanel rightPanel = new JPanel();
-
-		pointsPanel.setOpaque(false);
-		// pointsPanel.setBackground(new Color(0, 0, 0, 65));
 
 		masterPanel.add(mapPanel, JLayeredPane.DEFAULT_LAYER);
 		masterPanel.add(pointsPanel, JLayeredPane.PALETTE_LAYER);
@@ -40,16 +36,17 @@ public class Gui {
 			e.printStackTrace();
 		}
 		JLabel picLabel = new JLabel(new ImageIcon(myPicture));
-		picLabel.setBounds(0, 0, 400, 400);
+		mapPanel.setBounds(0, 0, 400, 400);
 		mapPanel.add(picLabel, 0);
 
-		pointsPanel.add(new Map());
-
+		Map map = new Map();
+		map.setPreferredSize(new Dimension(400, 400));
 		pointsPanel.setBounds(0, 0, 400, 400);
-		mapPanel.setBounds(0, 0, 400, 400);
+		pointsPanel.setOpaque(false);
+		pointsPanel.add(map);
 
 		frame.getContentPane().setLayout(new BorderLayout());
-		frame.getContentPane().add(new Map());
+		frame.getContentPane().add(masterPanel);
 		frame.validate();
 	}
 }
