@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Rectangle;
 
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
@@ -10,10 +11,10 @@ public class Gui {
 
 		// Display the window.
 		frame.pack();
-		frame.setSize(1000, 800);
+		frame.setSize(1071, 866);
 		frame.setVisible(true);
 		// 1.23672 : 1 is the aspect ratio of the map image
-		JLayeredPane map = new Map((int) Math.round(frame.getHeight() * 1.23672), frame.getHeight());
+		JLayeredPane map = new Map(new Rectangle(0, 0, 1071, 866));
 
 		frame.getContentPane().setLayout(new BorderLayout());
 		frame.getContentPane().add(map);

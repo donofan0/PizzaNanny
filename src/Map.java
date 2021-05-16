@@ -1,8 +1,8 @@
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -16,7 +16,7 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 
 public class Map extends JLayeredPane {
-	Map(int width, int height) {
+	Map(Rectangle frame) {
 		JPanel mapImagePanel = new JPanel();
 		JPanel pointsPanel = new JPanel();
 
@@ -31,12 +31,14 @@ public class Map extends JLayeredPane {
 			e.printStackTrace();
 		}
 		JLabel picLabel = new JLabel(new ImageIcon(myPicture));
-		mapImagePanel.setBounds(0, 0, width, height);
+		picLabel.setBounds(frame);
+		mapImagePanel.setBounds(frame);
 		mapImagePanel.add(picLabel, 0);
 
 		Points points = new Points();
-		points.setPreferredSize(new Dimension(width, height));
-		pointsPanel.setBounds(0, 0, width, height);
+		points.setPreferredSize(frame.getSize());
+		points.setBounds(frame);
+		pointsPanel.setBounds(frame);
 		pointsPanel.setOpaque(false);
 		pointsPanel.add(points);
 	}
@@ -44,8 +46,8 @@ public class Map extends JLayeredPane {
 
 class Points extends JComponent {
 	final static double earthRadius = 6371.0070072;
-	final static Point2D.Double topLeftMap = new Point2D.Double(-6.715558, 53.410977);
-	final static Point bottomRigthMap = new Point(longitudeToX(-6.456531), latitudeToY(53.286957));
+	final static Point2D.Double topLeftMap = new Point2D.Double(-6.713, 53.41);
+	final static Point bottomRigthMap = new Point(longitudeToX(-6.456531), latitudeToY(53.2944));
 	final static Point apachePizza = new Point(longitudeToX(-6.592963), latitudeToY(53.381176));
 	double scaleFactor = 1.0;
 
@@ -79,11 +81,11 @@ class Points extends JComponent {
 	}
 
 	public static int latitudeToY(double latitude) {
-		return (int) Math.round(calcDistance(topLeftMap.y, 0, latitude, 0));
+		return (int) Math.round(calcDistance(topLeftMap.y, topLeftMap.x, latitude, topLeftMap.x));
 	}
 
 	public static int longitudeToX(double longitude) {
-		return (int) Math.round(calcDistance(0, topLeftMap.x, 0, longitude));
+		return (int) Math.round(calcDistance(topLeftMap.y, topLeftMap.x, topLeftMap.y, longitude));
 	}
 
 	@Override
@@ -97,14 +99,14 @@ class Points extends JComponent {
 		for (Customer customer : Main.customers) {
 			int x = (int) Math.round(customer.location.x * scaleFactor);
 			int y = (int) Math.round(customer.location.y * scaleFactor);
-			g2.fillOval(x, y, 8, 8);
+			g2.fillOval(x, y, 10, 10);
 			// g2.drawOval(x, y, 5, 5);
 		}
 
 		int x = (int) Math.round(apachePizza.x * scaleFactor);
 		int y = (int) Math.round(apachePizza.y * scaleFactor);
 		g2.setColor(Color.RED);
-		g2.fillOval(x, y, 8, 8);
+		g2.fillOval(x, y, 10, 10);
 
 //		g2.setStroke(new BasicStroke(2f));
 //		g2.setColor(Color.RED);
