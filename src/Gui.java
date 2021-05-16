@@ -1,15 +1,7 @@
 import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
 
 public class Gui {
 	public Gui() {
@@ -20,33 +12,11 @@ public class Gui {
 		frame.pack();
 		frame.setSize(1000, 800);
 		frame.setVisible(true);
-
-		JLayeredPane masterPanel = new JLayeredPane();
-		JPanel mapPanel = new JPanel();
-		JPanel pointsPanel = new JPanel();
-
-		masterPanel.add(mapPanel, JLayeredPane.DEFAULT_LAYER);
-		masterPanel.add(pointsPanel, JLayeredPane.PALETTE_LAYER);
-
-		BufferedImage myPicture = null;
-		try {
-			// TODO: fix directory
-			myPicture = ImageIO.read(new File("./src/map.png"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		JLabel picLabel = new JLabel(new ImageIcon(myPicture));
-		mapPanel.setBounds(0, 0, 400, 400);
-		mapPanel.add(picLabel, 0);
-
-		Map map = new Map();
-		map.setPreferredSize(new Dimension(400, 400));
-		pointsPanel.setBounds(0, 0, 400, 400);
-		pointsPanel.setOpaque(false);
-		pointsPanel.add(map);
+		// 1.23672 : 1 is the aspect ratio of the map image
+		JLayeredPane map = new Map((int) Math.round(frame.getHeight() * 1.23672), frame.getHeight());
 
 		frame.getContentPane().setLayout(new BorderLayout());
-		frame.getContentPane().add(masterPanel);
+		frame.getContentPane().add(map);
 		frame.validate();
 	}
 }

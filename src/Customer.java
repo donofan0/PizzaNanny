@@ -16,8 +16,8 @@ public class Customer {
 		this.waitTime = waitTime;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		this.x = Map.latitudeToX(latitude);
-		this.y = Map.longitudeToY(longitude);
+		this.x = Points.latitudeToX(latitude);
+		this.y = Points.longitudeToY(longitude);
 
 		if (x > Main.largestDistance) {
 			Main.largestDistance = x;

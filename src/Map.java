@@ -1,10 +1,46 @@
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
 
-public class Map extends JComponent {
+public class Map extends JLayeredPane {
+	Map(int width, int height) {
+		JPanel mapImagePanel = new JPanel();
+		JPanel pointsPanel = new JPanel();
+
+		this.add(mapImagePanel, JLayeredPane.DEFAULT_LAYER);
+		this.add(pointsPanel, JLayeredPane.PALETTE_LAYER);
+
+		BufferedImage myPicture = null;
+		try {
+			// TODO: fix directory
+			myPicture = ImageIO.read(new File("./src/map.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		JLabel picLabel = new JLabel(new ImageIcon(myPicture));
+		mapImagePanel.setBounds(0, 0, width, height);
+		mapImagePanel.add(picLabel, 0);
+
+		Points points = new Points();
+		points.setPreferredSize(new Dimension(400, 400));
+		pointsPanel.setBounds(0, 0, width, height);
+		pointsPanel.setOpaque(false);
+		pointsPanel.add(points);
+	}
+}
+
+class Points extends JComponent {
 	final static double earthRadius = 6371.0070072;
 	double scaleFactor = 1.0;
 
@@ -32,10 +68,6 @@ public class Map extends JComponent {
 
 	public static long longitudeToY(double longitude) {
 		return Math.round(calcDistance(0, Main.origin.y, 0, longitude));
-	}
-
-	public Map() {
-
 	}
 
 	@Override
