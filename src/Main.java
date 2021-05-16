@@ -21,7 +21,6 @@ public class Main {
 				}
 			}
 		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		Gui gui = new Gui();
