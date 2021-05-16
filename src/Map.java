@@ -42,6 +42,7 @@ public class Map extends JComponent {
 	public void paint(Graphics g) {
 		// Draw a simple line using the Graphics2D draw() method.
 		Graphics2D g2 = (Graphics2D) g;
+
 		scaleFactor = (double) 500 / Main.largestDistance;
 		for (Customer customer : Main.customers) {
 			int x = (int) Math.round(customer.x * scaleFactor);
