@@ -16,6 +16,8 @@ public class Customer {
 		this.waitTime = waitTime;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		location = Points.latLongtoPoint(latitude, longitude);
+		location = Map.latLongtoPoint(latitude, longitude);
+
+		// System.out.println(location);
 	}
 }

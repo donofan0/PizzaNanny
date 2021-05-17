@@ -4,6 +4,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -17,13 +18,14 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 
 public class Map extends JLayeredPane {
+	final static double earthRadius = 6371.0070072;
+	final static Point2D.Double topLeftMap = new Point2D.Double(-6.714, 53.4115);
+	final static Point bottomRigthMap = new Point(longitudeToX(-6.455), latitudeToY(53.2944));
+	final static Point apachePizza = new Point(longitudeToX(-6.592963), latitudeToY(53.381176));
+	static double scaleFactor = 1.0;
+
 	Map(Rectangle frame) {
 		JPanel mapImagePanel = new JPanel();
-		JPanel pointsPanel = new JPanel();
-
-		this.setBounds(frame);
-		this.add(mapImagePanel, JLayeredPane.DEFAULT_LAYER);
-		this.add(pointsPanel, JLayeredPane.PALETTE_LAYER);
 
 		BufferedImage myPicture = null;
 		try {
@@ -40,18 +42,18 @@ public class Map extends JLayeredPane {
 		Points points = new Points();
 		points.setPreferredSize(frame.getSize());
 		points.setBounds(frame);
-		pointsPanel.setBounds(frame);
-		pointsPanel.setOpaque(false);
-		pointsPanel.add(points);
-	}
-}
+		points.setOpaque(false);
 
-class Points extends JComponent {
-	final static double earthRadius = 6371.0070072;
-	final static Point2D.Double topLeftMap = new Point2D.Double(-6.713, 53.41);
-	final static Point bottomRigthMap = new Point(longitudeToX(-6.453), latitudeToY(53.2944));
-	final static Point apachePizza = new Point(longitudeToX(-6.592963), latitudeToY(53.381176));
-	double scaleFactor = 1.0;
+		Lines lines = new Lines();
+		lines.setPreferredSize(frame.getSize());
+		lines.setBounds(frame);
+		lines.setOpaque(false);
+
+		this.setBounds(frame);
+		this.add(mapImagePanel, JLayeredPane.DEFAULT_LAYER);
+		this.add(points, JLayeredPane.PALETTE_LAYER);
+		this.add(lines, JLayeredPane.MODAL_LAYER);
+	}
 
 	public static double absDiffRad(double in1, double in2) {
 		double diff = (in1 - in2);
@@ -61,7 +63,12 @@ class Points extends JComponent {
 		return diff;
 	}
 
-	public static double calcDistance(double lat1, double long1, double lat2, double long2) {
+	public static double calculateDistance(Point in1, Point in2) {
+		return Math.sqrt(Math.pow((in2.x - in1.x), 2) + Math.pow((in2.y - in1.y), 2));
+	}
+
+	public static double calcGPSDistance(double lat1, double long1, double lat2, double long2) {
+		// convert to degrees
 		lat1 *= Math.PI / 180;
 		long1 *= Math.PI / 180;
 		lat2 *= Math.PI / 180;
@@ -73,7 +80,6 @@ class Points extends JComponent {
 		// meaning it rounds it to the nearest 100.
 		double deltaSigma = Math
 				.acos(Math.sin(lat1) * Math.sin(lat2) + Math.cos(lat1) * Math.cos(lat2) * Math.cos(deltaLamda));
-		System.out.println(earthRadius * deltaSigma * 1000);
 		return earthRadius * deltaSigma * 1000;
 	}
 
@@ -83,44 +89,53 @@ class Points extends JComponent {
 	}
 
 	public static int latitudeToY(double latitude) {
-		return (int) Math.round(calcDistance(topLeftMap.y, topLeftMap.x, latitude, topLeftMap.x));
+		return (int) Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, latitude, topLeftMap.x));
 	}
 
 	public static int longitudeToX(double longitude) {
-		return (int) Math.round(calcDistance(topLeftMap.y, topLeftMap.x, topLeftMap.y, longitude));
+		return (int) Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, topLeftMap.y, longitude));
 	}
+}
 
+class Points extends JComponent {
 	@Override
 	public void paint(Graphics g) {
 		// Draw a simple line using the Graphics2D draw() method.
 		Graphics2D g2 = (Graphics2D) g;
 
 		// scale factors = pixels per meter
-
-		scaleFactor = (double) g2.getClipBounds().width / bottomRigthMap.x;
+		Map.scaleFactor = (double) g2.getClipBounds().width / Map.bottomRigthMap.x;
 		for (Customer customer : Main.customers) {
-			int x = (int) Math.round(customer.location.x * scaleFactor);
-			int y = (int) Math.round(customer.location.y * scaleFactor);
-			g2.fillOval(x, y, 10, 10);
+			int x = (int) Math.round(customer.location.x * Map.scaleFactor);
+			int y = (int) Math.round(customer.location.y * Map.scaleFactor);
+			g2.fillOval(x - 5, y - 5, 10, 10);
 			// g2.drawOval(x, y, 5, 5);
 		}
 
-		int x = (int) Math.round(apachePizza.x * scaleFactor);
-		int y = (int) Math.round(apachePizza.y * scaleFactor);
+		int x = (int) Math.round(Map.apachePizza.x * Map.scaleFactor);
+		int y = (int) Math.round(Map.apachePizza.y * Map.scaleFactor);
 		g2.setColor(Color.RED);
-		g2.fillOval(x, y, 10, 10);
+		g2.fillOval(x - 5, y - 5, 10, 10);
+	}
+}
 
-//		g2.setStroke(new BasicStroke(2f));
-//		g2.setColor(Color.RED);
-//		g2.draw(new Line2D.Double(50, 150, 250, 350));
-//		g2.setColor(Color.GREEN);
-//		g2.draw(new Line2D.Double(250, 350, 350, 250));
-//		g2.setColor(Color.BLUE);
-//		g2.draw(new Line2D.Double(350, 250, 150, 50));
-//		g2.setColor(Color.YELLOW);
-//		g2.draw(new Line2D.Double(150, 50, 50, 150));
-//		g2.setColor(Color.BLACK);
-//		g2.draw(new Line2D.Double(0, 0, 400, 400));
+class Lines extends JComponent {
+	@Override
+	public void paint(Graphics g) {
+		// Draw a simple line using the Graphics2D draw() method.
+		Graphics2D g2 = (Graphics2D) g;
 
+		for (int i = 0; i < Main.bestPath.size(); i++) {
+			Point start = Map.apachePizza;
+			Point end = Main.customers.get(Main.bestPath.get(i)).location;
+			if (i != 0) {
+				start = Main.customers.get(Main.bestPath.get(i - 1)).location;
+				end = Main.customers.get(Main.bestPath.get(i)).location;
+			}
+
+			g2.setColor(Color.BLUE);
+			g2.draw(new Line2D.Double(start.x * Map.scaleFactor, start.y * Map.scaleFactor, end.x * Map.scaleFactor,
+					end.y * Map.scaleFactor));
+		}
 	}
 }
