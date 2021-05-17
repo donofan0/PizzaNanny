@@ -6,8 +6,10 @@ import java.awt.event.ComponentEvent;
 import javax.swing.JFrame;
 
 public class Gui {
-	private JFrame frame;
-	private Map map;
+	public static JFrame frame;
+	public static Map map;
+	private ControlPanelRight controlPanelRight;
+	private ControlPanelBottom controlPanelBottom;
 
 	public Gui() {
 		frame = new JFrame("Draw Graph");
@@ -17,11 +19,15 @@ public class Gui {
 		frame.pack();
 		frame.setSize(1071, 777);
 		frame.setVisible(true);
-		// 1.23672 : 1 is the aspect ratio of the map image
-		map = new Map(new Rectangle(0, 0, frame.getWidth(), frame.getHeight()));
+
+		map = new Map(new Rectangle(0, 0, frame.getWidth() - 100, frame.getHeight() - 100));
+		controlPanelRight = new ControlPanelRight();
+		controlPanelBottom = new ControlPanelBottom();
 
 		frame.getContentPane().setLayout(new BorderLayout());
 		frame.getContentPane().add(map);
+		frame.getContentPane().add(controlPanelRight, BorderLayout.EAST);
+		frame.getContentPane().add(controlPanelBottom, BorderLayout.SOUTH);
 
 		frame.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent componentEvent) {
