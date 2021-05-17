@@ -20,9 +20,9 @@ public class Gui {
 		frame.setSize(1071, 777);
 		frame.setVisible(true);
 
-		map = new Map(new Rectangle(0, 0, frame.getWidth() - 100, frame.getHeight() - 100));
 		controlPanelRight = new ControlPanelRight();
 		controlPanelBottom = new ControlPanelBottom();
+		map = new Map(new Rectangle(0, 0, frame.getWidth() - 200, frame.getHeight() - 100));
 
 		frame.getContentPane().setLayout(new BorderLayout());
 		frame.getContentPane().add(map);
@@ -33,7 +33,7 @@ public class Gui {
 			public void componentResized(ComponentEvent componentEvent) {
 				frame.getContentPane().remove(map);
 
-				map = new Map(new Rectangle(0, 0, frame.getWidth(), frame.getHeight()));
+				map = new Map(new Rectangle(0, 0, frame.getWidth() - 200, frame.getHeight() - 100));
 				frame.getContentPane().add(map);
 				frame.validate();
 			}

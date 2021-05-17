@@ -25,11 +25,13 @@ public class ControlPanelBottom extends JPanel {
 		this.add(submit);
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				// clear points here
+
 				String[] input = inputTextArea.getText().split("\\n");
 				for (int x = 0; x < input.length; x++) {
 					String[] currentLine = input[x].split(",");
-					Customer customer = new Customer(currentLine[1], Integer.parseInt(currentLine[2]),
-							Double.parseDouble(currentLine[3]), Double.parseDouble(currentLine[4]));
+					Customer customer = new Customer(currentLine[1], Integer.parseInt(currentLine[2].strip()),
+							Double.parseDouble(currentLine[3].strip()), Double.parseDouble(currentLine[4].strip()));
 					Main.customers.add(customer);
 				}
 
