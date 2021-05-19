@@ -67,6 +67,13 @@ public class Map extends JLayeredPane {
 		return Math.sqrt(Math.pow((in2.x - in1.x), 2) + Math.pow((in2.y - in1.y), 2));
 	}
 
+	public static double calculateSlope(Point in1, Point in2) {
+		if (in1.x - in2.x == 0) {
+			return 999999999;
+		}
+		return (in1.getY() - in2.getY()) / (in1.getX() - in2.getX());
+	}
+
 	public static double calcGPSDistance(double lat1, double long1, double lat2, double long2) {
 		// convert to degrees
 		lat1 *= Math.PI / 180;

@@ -32,7 +32,7 @@ public class ControlPanel extends JPanel {
 		c.gridheight = 1;
 		c.gridx = 0;
 
-		String[] algorithems = { "Nearest Neighbor", "Brute Force", "Convex Hull", "Nerual Network" };
+		String[] algorithems = { "Nearest Neighbor", "Convex Hull", "Nerual Network" };
 		JComboBox algorithmSelect = new JComboBox(algorithems);
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
 		c.gridy = 0;
@@ -81,7 +81,18 @@ public class ControlPanel extends JPanel {
 				Gui.frame.getContentPane().add(Gui.map);
 				Gui.frame.validate();
 
-				Algorithms.calculateNearestNeighbor();
+				int algSelected = algorithmSelect.getSelectedIndex();
+				switch (algSelected) {
+				case 0:
+					Algorithms.calculateNearestNeighbor();
+					break;
+				case 1:
+					Algorithms.calculateConvexHull();
+					break;
+				default:
+					Algorithms.calculateNearestNeighbor();
+					break;
+				}
 				outputTextArea.setText(Main.bestPath.toString());
 
 				punishment.setText("Minues over 30: " + Algorithms.calculateMinutesOver());
