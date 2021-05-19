@@ -1,4 +1,5 @@
 import java.awt.Point;
+import java.util.ArrayList;
 
 public class Algorithms {
 	// drivers speed it 1000 meters per minute
@@ -41,6 +42,7 @@ public class Algorithms {
 	public static void calculateConvexHull() {
 		Main.bestPath.clear();
 
+		// go to the lowest point
 		int largestY = -1;
 		int largestYIndex = -1;
 		for (int i = 0; i < Main.customers.size(); i++) {
@@ -52,49 +54,62 @@ public class Algorithms {
 		}
 		Main.bestPath.add(largestYIndex);
 
-		for (int i = 0; i < Main.customers.size() - 1; i++) {
-			int curCustomerIndex = Main.bestPath.get(Main.bestPath.size() - 1);
-			Point curCustomer = Main.customers.get(curCustomerIndex).location;
-			int leftMostIndex = calculateLeftMostPointIndex(curCustomer, 1);
-			if (leftMostIndex == -1) {
+		// makes a loop round the outside of the customer
+		for (int mode = 1; mode <= 4; mode++) {
+			for (int i = 0; i < Main.customers.size(); i++) {
+				int curCustomerIndex = Main.bestPath.get(Main.bestPath.size() - 1);
+				Point curCustomer = Main.customers.get(curCustomerIndex).location;
+				int leftMostIndex = calculateLeftMostPointIndex(curCustomer, mode);
+				if (leftMostIndex == -1) {
+					break;
+				}
+				Main.bestPath.add(leftMostIndex);
+			}
+		}
+
+		for (int n = 0; n < Main.customers.size(); n++) {
+			// finds the lowest point which is not connected
+			largestY = -1;
+			largestYIndex = -1;
+			for (int i = 0; i < Main.customers.size(); i++) {
+				if (Main.bestPath.contains(i)) {
+					continue;
+				}
+				Point curPoint = Main.customers.get(i).location;
+				if (curPoint.y > largestY) {
+					largestY = curPoint.y;
+					largestYIndex = i;
+				}
+			}
+			if (largestYIndex == -1) {
 				break;
 			}
-			Main.bestPath.add(leftMostIndex);
-		}
-		for (int i = 0; i < Main.customers.size() - 1; i++) {
-			int curCustomerIndex = Main.bestPath.get(Main.bestPath.size() - 1);
-			Point curCustomer = Main.customers.get(curCustomerIndex).location;
-			int leftMostIndex = calculateLeftMostPointIndex(curCustomer, 2);
-			if (leftMostIndex == -1) {
-				break;
+
+			// connects this point to the circle
+			double bestTime = 999999999;
+			double bestDistance = 999999999;
+			int bestInsert = -1;
+			for (int i = 1; i < Main.bestPath.size(); i++) {
+				// calulates the cost if the point was inserted here
+				ArrayList<Integer> path = new ArrayList<Integer>(Main.bestPath);
+				path.add(i, largestYIndex);
+				double[] timeDistance = calculateTimeDistance(path);
+				if (timeDistance[0] < bestTime) {
+					bestTime = timeDistance[0];
+					bestInsert = i;
+				} else if (timeDistance[0] == bestTime && timeDistance[1] < bestDistance) {
+					bestDistance = timeDistance[1];
+					bestInsert = i;
+				}
 			}
-			Main.bestPath.add(leftMostIndex);
+			Main.bestPath.add(bestInsert, largestYIndex);
 		}
-//		for (int i = 0; i < Main.customers.size() - 1; i++) {
-//			int curCustomerIndex = Main.bestPath.get(Main.bestPath.size() - 1);
-//			Point curCustomer = Main.customers.get(curCustomerIndex).location;
-//			int leftMostIndex = calculateLeftMostPointIndex(curCustomer, 3);
-//			if (leftMostIndex == -1) {
-//				break;
-//			}
-//			Main.bestPath.add(leftMostIndex);
-//		}
-//		for (int i = 0; i < Main.customers.size() - 1; i++) {
-//			int curCustomerIndex = Main.bestPath.get(Main.bestPath.size() - 1);
-//			Point curCustomer = Main.customers.get(curCustomerIndex).location;
-//			int leftMostIndex = calculateLeftMostPointIndex(curCustomer, 4);
-//			if (Main.bestPath.contains(leftMostIndex)) {
-//				break;
-//			}
-//
-//			Main.bestPath.add(leftMostIndex);
-//		}
 	}
 
 	public static int calculateLeftMostPointIndex(Point start, int mode) {
-		int LeftMostPointIndex = 9999999;
-		double LeftMostPointVal = 9999999;
-		if (mode == 2 || mode == 4) {
+		int LeftMostPointIndex = -1;
+		double LeftMostPointVal = 999999999;
+		if (mode == 2) {
 			LeftMostPointVal = 0;
 		}
 		for (int i = 0; i < Main.customers.size(); i++) {
@@ -105,69 +120,75 @@ public class Algorithms {
 			double slope = Map.calculateSlope(start, curPoint);
 			switch (mode) {
 			case 1:
-				if (slope > LeftMostPointVal && curPoint.x < start.x) {
+				if (slope < LeftMostPointVal && curPoint.x < start.x) {
 					LeftMostPointVal = slope;
 					LeftMostPointIndex = i;
 				}
 				break;
 			case 2:
-				if (Math.abs(slope) > LeftMostPointVal && curPoint.y > start.y) {
-					LeftMostPointVal = Math.abs(slope);
+				if (slope > LeftMostPointVal && curPoint.y < start.y) {
+					LeftMostPointVal = slope;
 					LeftMostPointIndex = i;
 				}
 				break;
 			case 3:
-				if (Math.abs(slope) < LeftMostPointVal && curPoint.x > start.x) {
-					LeftMostPointVal = Math.abs(slope);
+				if (slope < LeftMostPointVal && curPoint.x > start.x) {
+					LeftMostPointVal = slope;
 					LeftMostPointIndex = i;
 				}
 				break;
 			case 4:
-				if (Math.abs(slope) > LeftMostPointVal && curPoint.y < start.y) {
-					LeftMostPointVal = Math.abs(slope);
+				if (slope < LeftMostPointVal && curPoint.y > start.y) {
+					LeftMostPointVal = slope;
 					LeftMostPointIndex = i;
 				}
 				break;
 			}
 		}
-		switch (mode) {
-		case 1:
-			if (LeftMostPointVal < 0) {
-				return -1;
-			} else {
-				return LeftMostPointIndex;
-			}
-		case 2:
-			if (LeftMostPointVal < 0) {
-				return -1;
-			} else {
-				return LeftMostPointIndex;
-			}
-		case 3:
-			if (LeftMostPointVal < 0) {
-				return -1;
-			} else {
-				return LeftMostPointIndex;
-			}
-		case 4:
-			if (LeftMostPointVal < 0) {
-				return -1;
-			} else {
-				return LeftMostPointIndex;
-			}
-		}
-		return -1;
+		return LeftMostPointIndex;
 	}
 
-	public static float calculateMinutesOver() {
-		double[] distances = new double[Main.bestPath.size()];
-		for (int i = 0; i < Main.bestPath.size(); i++) {
-			Customer endCustomer = Main.customers.get(Main.bestPath.get(i));
+	// returns an array of where element 1 is the time late and element 2 is the
+	// total disance of the path
+	public static double[] calculateTimeDistance(ArrayList<Integer> path) {
+		double[] distances = CalculateTotalDistance(path);
+
+		float lateMins = 0;
+		for (int i = 0; i < path.size(); i++) {
+			Customer endCustomer = Main.customers.get(path.get(i));
+			float time = (float) (distances[i] / driverSpeed) + endCustomer.waitTime;
+			if (time > 30) {
+				lateMins += time - 30;
+			}
+		}
+
+		double[] output = { lateMins, distances[distances.length - 1] };
+		return output;
+	}
+
+	public static float calculateMinutesOver(ArrayList<Integer> path) {
+		double[] distances = CalculateTotalDistance(path);
+
+		float lateMins = 0;
+		for (int i = 0; i < path.size(); i++) {
+			Customer endCustomer = Main.customers.get(path.get(i));
+			float time = (float) (distances[i] / driverSpeed) + endCustomer.waitTime;
+			if (time > 30) {
+				lateMins += time - 30;
+			}
+		}
+		return lateMins;
+	}
+
+	public static double[] CalculateTotalDistance(ArrayList<Integer> path) {
+		double[] distances = new double[path.size()];
+		for (int i = 0; i < path.size(); i++) {
+			Customer endCustomer = Main.customers.get(path.get(i));
 			Point start = Map.apachePizza;
 			Point end = endCustomer.location;
 			if (i != 0) {
-				start = Main.customers.get(Main.bestPath.get(i - 1)).location;
-				end = Main.customers.get(Main.bestPath.get(i)).location;
+				start = Main.customers.get(path.get(i - 1)).location;
+				end = Main.customers.get(path.get(i)).location;
 			}
 			double distance = Map.calculateDistance(start, end);
 			if (i == 0) {
@@ -176,15 +197,6 @@ public class Algorithms {
 				distances[i] = distance + distances[i - 1];
 			}
 		}
-
-		float lateMins = 0;
-		for (int i = 0; i < Main.bestPath.size(); i++) {
-			Customer endCustomer = Main.customers.get(Main.bestPath.get(i));
-			float time = (float) (distances[i] / driverSpeed) + endCustomer.waitTime;
-			if (time > 30) {
-				lateMins += time - 30;
-			}
-		}
-		return lateMins;
+		return distances;
 	}
 }

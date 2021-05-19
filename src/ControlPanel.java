@@ -5,6 +5,7 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -71,10 +72,12 @@ public class ControlPanel extends JPanel {
 				Main.bestPath.clear();
 				for (int x = 0; x < input.length; x++) {
 					String[] currentLine = input[x].split(",");
-					Customer customer = new Customer(currentLine[1], Integer.parseInt(currentLine[2].strip()),
-							Double.parseDouble(currentLine[3].strip()), Double.parseDouble(currentLine[4].strip()));
-					Main.customers.add(Integer.parseInt(currentLine[0].strip()) - 1, customer);
+					Customer customer = new Customer(Integer.parseInt(currentLine[0].strip()), currentLine[1],
+							Integer.parseInt(currentLine[2].strip()), Double.parseDouble(currentLine[3].strip()),
+							Double.parseDouble(currentLine[4].strip()));
+					Main.customers.add(customer);
 				}
+				Collections.sort(Main.customers);
 
 				Gui.frame.getContentPane().remove(Gui.map);
 				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160));
@@ -93,9 +96,14 @@ public class ControlPanel extends JPanel {
 					Algorithms.calculateNearestNeighbor();
 					break;
 				}
-				outputTextArea.setText(Main.bestPath.toString());
 
-				punishment.setText("Minues over 30: " + Algorithms.calculateMinutesOver());
+				String outputResult = "";
+				for (int i = 0; i < Main.bestPath.size(); i++) {
+					outputResult += Main.customers.get(Main.bestPath.get(i)).id + ", ";
+				}
+				outputTextArea.setText(outputResult);
+
+				punishment.setText("Minues over 30: " + Algorithms.calculateMinutesOver(Main.bestPath));
 
 				Gui.frame.getContentPane().remove(Gui.map);
 				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160));
