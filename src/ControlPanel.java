@@ -33,7 +33,7 @@ public class ControlPanel extends JPanel {
 		c.gridheight = 1;
 		c.gridx = 0;
 
-		String[] algorithems = { "Nearest Neighbor", "Convex Hull", "Nerual Network" };
+		String[] algorithems = { "Nearest Neighbor", "Convex Hull", "Branch and Bound", "Two Opt Inversion" };
 		JComboBox algorithmSelect = new JComboBox(algorithems);
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
 		c.gridy = 0;

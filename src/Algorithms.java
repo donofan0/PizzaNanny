@@ -106,6 +106,19 @@ public class Algorithms {
 		}
 	}
 
+	// garinteed perfect answer
+	public static void calculateBranchBound(ArrayList<Integer> customersLeft) {
+		
+		if (customersLeft.size() == 0) {
+			//finished searching
+			return
+		}
+		
+		for (int i=0; i<customersLeft.size(); i++) {
+			
+		}
+	}
+
 	public static int calculateLeftMostPointIndex(Point start, int mode) {
 		int LeftMostPointIndex = -1;
 		double LeftMostPointVal = 999999999;
@@ -193,6 +206,7 @@ public class Algorithms {
 			double distance = Map.calculateDistance(start, end);
 			if (i == 0) {
 				distances[i] = distance;
+				// distances[i] = 0; TODO Fix
 			} else {
 				distances[i] = distance + distances[i - 1];
 			}
