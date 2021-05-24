@@ -1,4 +1,6 @@
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -6,9 +8,12 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -16,43 +21,68 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 
 public class Map extends JLayeredPane {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2755569004426869297L;
 	final static double earthRadius = 6371.0070072;
-	final static Point2D.Double topLeftMap = new Point2D.Double(-6.714, 53.4115);
-	final static Point bottomRigthMap = new Point(longitudeToX(-6.455), latitudeToY(53.2944));
-	final static Point apachePizza = new Point(longitudeToX(-6.592963), latitudeToY(53.381176));
-	static double scaleFactor = 1.0;
-
-	Map(Rectangle frame) {
-		JPanel mapImagePanel = new JPanel();
-
+	final static Point2D.Double topLeftMap = new Point2D.Double(-6.714, 53.411);
+	final static Point bottomRigthMap = new Point(longitudeToX(-6.4546), latitudeToY(53.2857));
+	final static Point apachePizza = new Point(longitudeToX(-6.59296), latitudeToY(53.381176));
+	final static float aspectRatio = 1.23672055427f;
+	final static int driverSpeed = 1000;
+	static boolean constrainWidth = true;
+	
+	Map(Rectangle frame, Boolean startDrone) {
+		JPanel mapImagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		if (frame.width > frame.height*aspectRatio) {
+			constrainWidth = false;
+		} else {
+			constrainWidth = true;
+		}
+		
 		BufferedImage myPicture = null;
+		JLabel picLabel;
 		try {
 			// TODO: fix directory
 			myPicture = ImageIO.read(new File("./src/map.png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		JLabel picLabel = new JLabel(new ImageIcon(myPicture.getScaledInstance(frame.width, -1, Image.SCALE_SMOOTH)));
+		if (constrainWidth) {
+			picLabel = new JLabel(new ImageIcon(myPicture.getScaledInstance(frame.width, -1, Image.SCALE_SMOOTH)));
+		} else {
+			picLabel = new JLabel(new ImageIcon(myPicture.getScaledInstance(-1, frame.height, Image.SCALE_SMOOTH)));
+		}
 		picLabel.setBounds(frame);
 		mapImagePanel.setBounds(frame);
 		mapImagePanel.add(picLabel, 0);
-
-		Points points = new Points();
-		points.setPreferredSize(frame.getSize());
-		points.setBounds(frame);
-		points.setOpaque(false);
 
 		Lines lines = new Lines();
 		lines.setPreferredSize(frame.getSize());
 		lines.setBounds(frame);
 		lines.setOpaque(false);
-
+		
+		Points points = new Points();
+		points.setPreferredSize(frame.getSize());
+		points.setBounds(frame);
+		points.setOpaque(false);
+		
 		this.setBounds(frame);
 		this.add(mapImagePanel, JLayeredPane.DEFAULT_LAYER);
-		this.add(points, JLayeredPane.PALETTE_LAYER);
-		this.add(lines, JLayeredPane.MODAL_LAYER);
+		this.add(lines, JLayeredPane.PALETTE_LAYER);
+		this.add(points, JLayeredPane.MODAL_LAYER);
+		
+		if (startDrone) {
+			Drone drone = new Drone(frame.getSize());
+			drone.setPreferredSize(frame.getSize());
+			drone.setBounds(frame);
+			drone.setOpaque(false);
+			this.add(drone, JLayeredPane.POPUP_LAYER);
+		}
 	}
 
 	public static double absDiffRad(double in1, double in2) {
@@ -102,38 +132,115 @@ public class Map extends JLayeredPane {
 	public static int longitudeToX(double longitude) {
 		return (int) Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, topLeftMap.y, longitude));
 	}
+	
+	public static float calculateTimeWaiting(Customer curCustomer, int pathIndex) {
+		double[] distances = CalculateTotalDistance(Main.bestPath.subList(0, pathIndex+1));
+		float time = (float) (distances[distances.length-1] / driverSpeed) + curCustomer.waitTime;
+		return time;
+	}
+	
+	// returns an array of where element 1 is the time late and element 2 is the
+	// total distance of the path
+	public static double[] calculateTimeDistance(ArrayList<Integer> path) {
+		double[] distances = CalculateTotalDistance(path);
+
+		float lateMins = 0;
+		for (int i = 0; i < path.size(); i++) {
+			Customer endCustomer = Main.customers.get(path.get(i));
+			float time = (float) (distances[i] / driverSpeed) + endCustomer.waitTime;
+			if (time > 30) {
+				lateMins += time - 30;
+			}
+		}
+
+		double[] output = { lateMins, distances[distances.length - 1] };
+		return output;
+	}
+
+	public static double[] CalculateTotalDistance(List<Integer> path) {
+		double[] distances = new double[path.size()];
+		for (int i = 0; i < path.size(); i++) {
+			Customer endCustomer = Main.customers.get(path.get(i));
+			Point start = Map.apachePizza;
+			//start = endCustomer.location;  //TODO Remove
+			Point end = endCustomer.location;
+			if (i != 0) {
+				start = Main.customers.get(path.get(i - 1)).location;
+				end = Main.customers.get(path.get(i)).location;
+			}
+			double distance = Map.calculateDistance(start, end);
+			if (i == 0) {
+				distances[i] = distance;
+			} else {
+				distances[i] = distance + distances[i - 1];
+			}
+		}
+		return distances;
+	}
 }
 
 class Points extends JComponent {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1035389041198415412L;
+	double scaleFactor;
+	
 	@Override
 	public void paint(Graphics g) {
 		// Draw a simple line using the Graphics2D draw() method.
 		Graphics2D g2 = (Graphics2D) g;
 
 		// scale factors = pixels per meter
-		Map.scaleFactor = (double) g2.getClipBounds().width / Map.bottomRigthMap.x;
-		for (Customer customer : Main.customers) {
-			int x = (int) Math.round(customer.location.x * Map.scaleFactor);
-			int y = (int) Math.round(customer.location.y * Map.scaleFactor);
-			g2.fillOval(x - 5, y - 5, 10, 10);
-			// g2.drawOval(x, y, 5, 5);
+		if (Map.constrainWidth) {
+			scaleFactor = (double) g2.getClipBounds().width / Map.bottomRigthMap.x;
+		} else {
+			scaleFactor = (double) g2.getClipBounds().height / Map.bottomRigthMap.y;
+		}
+		
+		for (int i=0; i<Main.customers.size(); i++) {
+			Customer customer = Main.customers.get(i);
+			int x = (int) Math.round(customer.location.x * scaleFactor);
+			int y = (int) Math.round(customer.location.y * scaleFactor);
+			if(ControlPanel.showEmoji) {
+				g2.drawImage(Images.getEmoji(Map.calculateTimeWaiting(customer, Main.bestPath.indexOf(i))), x - 8, y - 8, 16, 16, null);
+			} else {
+				g2.fillOval(x - 5, y - 5, 10, 10);
+			}
+			
+			g2.setFont(getFont().deriveFont(10f));
+			g2.drawString(""+customer.id, x+8, y-3);
 		}
 
-		int x = (int) Math.round(Map.apachePizza.x * Map.scaleFactor);
-		int y = (int) Math.round(Map.apachePizza.y * Map.scaleFactor);
+		int x = (int) Math.round(Map.apachePizza.x * scaleFactor);
+		int y = (int) Math.round(Map.apachePizza.y * scaleFactor);
 		g2.setColor(Color.RED);
 		g2.fillOval(x - 5, y - 5, 10, 10);
 	}
 }
 
 class Lines extends JComponent {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2255340471176749645L;
+	double scaleFactor;
+	
 	@Override
 	public void paint(Graphics g) {
 		// Draw a simple line using the Graphics2D draw() method.
 		Graphics2D g2 = (Graphics2D) g;
 
+		// scale factors = pixels per meter
+		if (Map.constrainWidth) {
+			scaleFactor = (double) g2.getClipBounds().width / Map.bottomRigthMap.x;
+		} else {
+			scaleFactor = (double) g2.getClipBounds().height / Map.bottomRigthMap.y;
+		}
+				
 		for (int i = 0; i < Main.bestPath.size(); i++) {
 			Point start = Map.apachePizza;
+			//start = Main.customers.get(Main.bestPath.get(i)).location;  //TODO Remove
 			Point end = Main.customers.get(Main.bestPath.get(i)).location;
 			if (i != 0) {
 				start = Main.customers.get(Main.bestPath.get(i - 1)).location;
@@ -141,8 +248,114 @@ class Lines extends JComponent {
 			}
 
 			g2.setColor(Color.BLUE);
-			g2.draw(new Line2D.Double(start.x * Map.scaleFactor, start.y * Map.scaleFactor, end.x * Map.scaleFactor,
-					end.y * Map.scaleFactor));
+			g2.draw(new Line2D.Double(start.x * scaleFactor, start.y * scaleFactor, end.x * scaleFactor,
+					end.y * scaleFactor));
 		}
 	}
+}
+
+class Drone extends JPanel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2255340493176749645L;
+	static double scaleFactor;
+	
+	Drone(Dimension size) {
+		// scale factors = pixels per meter
+		if (Map.constrainWidth) {
+			scaleFactor = size.getWidth() / Map.bottomRigthMap.x;
+		} else {
+			scaleFactor = size.getHeight() / Map.bottomRigthMap.y;
+		}
+				
+		Point start = Map.apachePizza;
+		Point end = Main.customers.get(Main.bestPath.get(0)).location;
+		JLabel drone = new JLabel(new ImageIcon(Images.drone2Pizza));
+		drone.setSize(60, 60);
+		Gui.animation.add(drone);
+		doAnimation(new Rectangle2D.Double(start.x*scaleFactor-30, start.y*scaleFactor-30, 60, 60), new Rectangle2D.Double(end.x*scaleFactor-30, end.y*scaleFactor-30, 60, 60), 500, drone, 0);
+	}
+	
+	private static void doAnimation(final Rectangle2D.Double start, final Rectangle2D.Double end, final int time, final JLabel label, int curIndex)  { 
+		label.setBounds(start.getBounds());  
+		label.setVisible(true);
+        SwingWorker<Boolean,Rectangle2D.Double> animate = new SwingWorker<Boolean,Rectangle2D.Double>() { 	
+            private float xDelta = (float)(end.x-start.x)/time;  //the speed it moves on the x
+        	private float yDelta = (float)(end.y-start.y)/time;  //the speed it moves on the y
+        	private float widthDelta = (float)(end.width-start.width)/time;    //the speed it moves on the width
+        	private float heightDelta = (float)(end.height-start.height)/time; //the speed it moves on the height
+        	private boolean running = true;  //makes sure that the while loop does not start again
+        	
+        	//changes the start coordinates into a double so that the location can be calculated more accurately
+        	private Rectangle2D.Double curLoc = new Rectangle2D.Double(start.getX(), start.getY(), start.getWidth(), start.getHeight());
+            @Override
+            protected Boolean doInBackground() throws Exception  
+            { 
+                while (running) {
+                	boolean xDone = false; //records when it has reached its target x
+                	boolean yDone = false; //records when it has reached its target y
+                	
+	                if ( ((curLoc.getX()>=end.x) && (xDelta >= 0)) || ((curLoc.getX()<=end.x) && (xDelta <= 0)) ) {
+	                	xDone = true;
+	                }
+	                
+	                if ( ( (curLoc.getY()>=end.y) && (yDelta >= 0) ) || ( (curLoc.getY()<=end.y) && (yDelta <= 0) ) ) {
+	                	yDone = true;
+	                }
+	                
+	                if (xDone && yDone) {
+	                	running = false;
+	                	return running;
+	                }
+	                
+                	if (!xDone) {
+                		curLoc.x += xDelta;
+                	}
+                	if (!yDone){
+                		curLoc.y += yDelta;
+                	}
+                	curLoc.width += widthDelta;
+                	curLoc.height += heightDelta;
+
+	                Thread.sleep(1);
+	                //System.out.println(curLoc.toString()+", xdelta="+xDelta+", ydelta="+yDelta);
+	                publish(curLoc); //sends the data to proccesing
+                } 
+                  
+                return true; 
+            } 
+  
+            @Override
+            protected void process(List<Rectangle2D.Double> chunks) 
+            { 
+				/*
+				 * sets the label to its new coordinates and size 
+				 * this is called in batches as in it could execute 
+				 * like this doInBackground,doInBackground,doInBackground,doInBackground, process, process,doInBackground, process, process, process
+				 * that is why it has to get the next item in the list
+				 */
+            	Rectangle2D.Double val = (java.awt.geom.Rectangle2D.Double) chunks.get(chunks.size()-1); 
+                label.setBounds(val.getBounds());;
+            } 
+  
+            @Override
+            protected void done()  
+            { 
+                // this method is called when the background  
+                // thread finishes execution 
+                label.setVisible(false);
+                System.out.println("Finished");  
+                
+                if(curIndex+1 < Main.bestPath.size()) {
+	                Point startNew = Main.customers.get(Main.bestPath.get(curIndex)).location;
+					Point endNew = Main.customers.get(Main.bestPath.get(curIndex+1)).location;
+	                doAnimation(new Rectangle2D.Double(startNew.x*scaleFactor-30, startNew.y*scaleFactor-30, 60, 60), new Rectangle2D.Double(endNew.x*scaleFactor-30, endNew.y*scaleFactor-30, 60, 60), time, label, curIndex+1);
+                }
+            } 
+        }; 
+          
+        // executes the swingworker on worker thread 
+        animate.execute();
+    }
 }

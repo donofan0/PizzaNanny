@@ -6,6 +6,6 @@ public class Main {
 	public static ArrayList<Integer> bestPath = new ArrayList<Integer>();
 
 	public static void main(String[] args) {
-		Gui gui = new Gui();
+		new Gui();
 	}
 }

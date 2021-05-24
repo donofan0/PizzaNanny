@@ -16,7 +16,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 public class ControlPanel extends JPanel {
-
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8430168436937097596L;
+	boolean showAddress = false;
+	static boolean showEmoji = false;
+	final static int convexHullRepeatSteps = 10;
+	
 	public ControlPanel(Rectangle frame) {
 		this.setBounds(frame);
 		this.setSize(frame.getSize());
@@ -33,8 +40,8 @@ public class ControlPanel extends JPanel {
 		c.gridheight = 1;
 		c.gridx = 0;
 
-		String[] algorithems = { "Nearest Neighbor", "Convex Hull", "Branch and Bound", "Two Opt Inversion" };
-		JComboBox algorithmSelect = new JComboBox(algorithems);
+		String[] algorithems = { "Nearest Neighbor", "Largest Time", "Convex Hull(Distance)", "Convex Hull(Time)", "Branch and Bound", "Two Opt Inversion" };
+		JComboBox<String> algorithmSelect = new JComboBox<String>(algorithems);
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
 		c.gridy = 0;
 		this.add(algorithmSelect, c);
@@ -46,6 +53,10 @@ public class ControlPanel extends JPanel {
 		JLabel punishment = new JLabel("Minues over 30: ");
 		c.gridy = 2;
 		this.add(punishment, c);
+		
+		JLabel distance = new JLabel("Total distance: m");
+		c.gridy = 3;
+		this.add(distance, c);
 
 		JTextArea outputTextArea = new JTextArea();
 		outputTextArea.setLineWrap(true);
@@ -53,25 +64,73 @@ public class ControlPanel extends JPanel {
 		outputDeliverys.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		// outputDeliverys.setPreferredSize(new Dimension(100, 100));
 		c.weighty = 40;
-		c.gridy = 3;
+		c.gridy = 4;
 		this.add(outputDeliverys, c);
 
-		JButton address = new JButton("Show Address");
+		JButton addressToggle = new JButton("Show Address");
 		c.weighty = 1;
-		c.gridy = 4;
-		this.add(address, c);
+		c.gridy = 5;
+		this.add(addressToggle, c);
+		addressToggle.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(showAddress) {
+					showAddress = false;
+					addressToggle.setText("Show Address");
+				} else {
+					showAddress = true;
+					addressToggle.setText("Hide Address");
+				}
+				
+				drawOutput(outputTextArea);
+			}
+		});
+		
+		JButton emojiToggle = new JButton("Show Emoji");
+		c.gridy = 6;
+		this.add(emojiToggle, c);
+		emojiToggle.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(showEmoji) {
+					showEmoji = false;
+					emojiToggle.setText("Show Emoji");
+				} else {
+					showEmoji = true;
+					emojiToggle.setText("Hide Emoji");
+				}
+				
+				Gui.frame.getContentPane().remove(Gui.map);
+				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160), false);
+				Gui.frame.getContentPane().add(Gui.map);
+				Gui.frame.validate();
+			}
+		});
+		
+		JButton startDrone = new JButton("Start Drone");
+		c.gridy = 7;
+		this.add(startDrone, c);
+		startDrone.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Gui.frame.getContentPane().remove(Gui.map);
+				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160), true);
+				Gui.frame.getContentPane().add(Gui.map);
+				Gui.frame.validate();
+			}
+		});
 
 		JButton submit = new JButton("Submit");
 		submit.setPreferredSize(new Dimension(100, 20));
-		c.gridy = 5;
+		c.gridy = 8;
 		this.add(submit, c);
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String[] input = Gui.inputTextArea.getText().split("\\n");
+				String[] input = Gui.inputTextArea.getText().trim().split("\\n");
 				Main.customers.clear();
 				Main.bestPath.clear();
 				for (int x = 0; x < input.length; x++) {
 					String[] currentLine = input[x].split(",");
+					if (currentLine.length < 5) {
+						continue;
+					}
 					Customer customer = new Customer(Integer.parseInt(currentLine[0].strip()), currentLine[1],
 							Integer.parseInt(currentLine[2].strip()), Double.parseDouble(currentLine[3].strip()),
 							Double.parseDouble(currentLine[4].strip()));
@@ -80,7 +139,7 @@ public class ControlPanel extends JPanel {
 				Collections.sort(Main.customers);
 
 				Gui.frame.getContentPane().remove(Gui.map);
-				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160));
+				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160), false);
 				Gui.frame.getContentPane().add(Gui.map);
 				Gui.frame.validate();
 
@@ -90,26 +149,42 @@ public class ControlPanel extends JPanel {
 					Algorithms.calculateNearestNeighbor();
 					break;
 				case 1:
-					Algorithms.calculateConvexHull();
+					Algorithms.calculateLargestTimeFirst();
+					break;
+				case 2:
+					Algorithms.calculateConvexHull(false, 0);
+					break;
+				case 3:
+					Algorithms.calculateConvexHull(true, convexHullRepeatSteps);
 					break;
 				default:
 					Algorithms.calculateNearestNeighbor();
 					break;
 				}
 
-				String outputResult = "";
-				for (int i = 0; i < Main.bestPath.size(); i++) {
-					outputResult += Main.customers.get(Main.bestPath.get(i)).id + ", ";
-				}
-				outputTextArea.setText(outputResult);
+				drawOutput(outputTextArea);
 
-				punishment.setText("Minues over 30: " + Algorithms.calculateMinutesOver(Main.bestPath));
-
+				double[] timeDistance = Map.calculateTimeDistance(Main.bestPath);
+				punishment.setText("Minues over 30: "+timeDistance[0]);
+				distance.setText("Total distance: "+timeDistance[1]+"m");
+				
 				Gui.frame.getContentPane().remove(Gui.map);
-				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160));
+				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160), false);
 				Gui.frame.getContentPane().add(Gui.map);
 				Gui.frame.validate();
 			}
 		});
+	}
+	
+	public void drawOutput(JTextArea outputTextArea) {
+		String outputResult = "";
+		for (int i = 0; i < Main.bestPath.size(); i++) {
+			outputResult += Main.customers.get(Main.bestPath.get(i)).id;
+			if (showAddress) {
+				outputResult += "("+Main.customers.get(Main.bestPath.get(i)).address+")";
+			}
+			outputResult += ", ";
+		}
+		outputTextArea.setText(outputResult);
 	}
 }
