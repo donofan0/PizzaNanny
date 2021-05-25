@@ -38,10 +38,10 @@ public class Algorithms {
 			Main.bestPath.add(nextCus);
 		}
 	}
-	
+
 	public static void calculateLargestTimeFirst() {
 		Main.bestPath.clear();
-		
+
 		for (int i = 0; i < Main.customers.size(); i++) {
 			int largestTime = -1;
 			int largestTimeIndex = -1;
@@ -124,14 +124,14 @@ public class Algorithms {
 			}
 			Main.bestPath.add(bestInsert, largestYIndex);
 		}
-		for (int repeat=0; repeat<numRepeatFixes; repeat++) {
+		for (int repeat = 0; repeat < numRepeatFixes; repeat++) {
 			for (int n = 0; n < Main.customers.size(); n++) {
 				// connects this point to the circle
 				Main.bestPath.removeAll(Collections.singleton(n));
 				double bestTime = 999999999;
 				double bestDistance = 999999999;
 				int bestInsert = -1;
-				for (int i = 0; i < Main.bestPath.size(); i++) {
+				for (int i = 0; i < Main.bestPath.size() + 1; i++) {
 					// calulates the cost if the point was inserted here
 					ArrayList<Integer> path = new ArrayList<Integer>(Main.bestPath);
 					path.add(i, n);
@@ -154,14 +154,14 @@ public class Algorithms {
 
 	// Guaranteed perfect answer
 	public static void calculateBranchBound(ArrayList<Integer> customersLeft) {
-		
+
 		if (customersLeft.size() == 0) {
-			//finished searching
-			//return
+			// finished searching
+			// return
 		}
-		
-		for (int i=0; i<customersLeft.size(); i++) {
-			
+
+		for (int i = 0; i < customersLeft.size(); i++) {
+
 		}
 	}
 
