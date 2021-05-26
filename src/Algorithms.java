@@ -4,31 +4,76 @@ import java.util.Collections;
 
 public class Algorithms {
 
-	public static void calculateNearestNeighbor() {
-		Main.bestPath.clear();
-		double shortestDistance = 999999999;
-		int nextCustomer = 0;
-		for (int i = 0; i < Main.customers.size(); i++) {
-			Customer customerNextPossibly = Main.customers.get(i);
-			double distance = Map.apachePizza.distance(customerNextPossibly.location);
-			if (distance < shortestDistance) {
-				shortestDistance = distance;
-				nextCustomer = i;
+	public static int compareAlogrithems() {
+		int bestAlgorithem = 0;
+		double bestTime = 999999999;
+		for (int i = 0; i < 5; i++) {
+			switch (i) {
+			case 0:
+				calculateNearestNeighbor(false);
+				break;
+			case 1:
+				calculateNearestNeighbor(true);
+				break;
+			case 2:
+				calculateConvexHull(false);
+				break;
+			case 3:
+				calculateConvexHull(true);
+				break;
+			case 4:
+				calculateLargestTimeFirst();
+				break;
+			}
+			double time = Map.calculateTime();
+			if (time < bestTime) {
+				bestAlgorithem = i;
+				bestTime = time;
 			}
 		}
-		Main.bestPath.add(nextCustomer);
 
-		for (int i = 0; i < Main.customers.size() - 1; i++) {
-			double shortestDist = 999999999;
+		switch (bestAlgorithem) {
+		case 0:
+			calculateNearestNeighbor(false);
+			break;
+		case 1:
+			calculateNearestNeighbor(true);
+			break;
+		case 2:
+			calculateConvexHull(false);
+			break;
+		case 3:
+			calculateConvexHull(true);
+			break;
+		case 4:
+			calculateLargestTimeFirst();
+			break;
+		}
+		return bestAlgorithem;
+	}
+
+	public static void calculateNearestNeighbor(boolean minimizeTime) {
+		Main.bestPath.clear();
+
+		for (int i = -1; i < Main.customers.size() - 1; i++) {
+			int curCustomerIndex;
+			Point curCustomer;
+			if (i == -1) {
+				curCustomerIndex = -1;
+				curCustomer = Map.apachePizza;
+			} else {
+				curCustomerIndex = Main.bestPath.get(Main.bestPath.size() - 1);
+				curCustomer = Main.customers.get(curCustomerIndex).location;
+			}
+
 			int nextCus = -1;
-			int curCustomerIndex = Main.bestPath.get(Main.bestPath.size() - 1);
-			Customer curCustomer = Main.customers.get(curCustomerIndex);
+			double shortestDist = 999999999;
 			for (int j = 0; j < Main.customers.size(); j++) {
 				if (curCustomerIndex == j) {
 					continue;
 				}
 				Customer customerNextPossibly = Main.customers.get(j);
-				double distance = curCustomer.location.distance(customerNextPossibly.location);
+				double distance = curCustomer.distance(customerNextPossibly.location);
 				if (distance < shortestDist && !Main.bestPath.contains(j)) {
 					shortestDist = distance;
 					nextCus = j;
@@ -36,26 +81,11 @@ public class Algorithms {
 			}
 			Main.bestPath.add(nextCus);
 		}
+
+		ReworkBestPath(minimizeTime);
 	}
 
-	public static void calculateLargestTimeFirst() {
-		Main.bestPath.clear();
-
-		for (int i = 0; i < Main.customers.size(); i++) {
-			int largestTime = -1;
-			int largestTimeIndex = -1;
-			for (int j = 0; j < Main.customers.size(); j++) {
-				Customer customer = Main.customers.get(j);
-				if (customer.waitTime > largestTime && !Main.bestPath.contains(j)) {
-					largestTime = customer.waitTime;
-					largestTimeIndex = j;
-				}
-			}
-			Main.bestPath.add(largestTimeIndex);
-		}
-	}
-
-	public static void calculateConvexHull(boolean minimizeTime, int numRepeatFixes) {
+	public static void calculateConvexHull(boolean minimizeTime) {
 		Main.bestPath.clear();
 
 		// go to the lowest point
@@ -83,6 +113,7 @@ public class Algorithms {
 			}
 		}
 
+		// connect the center point
 		for (int n = 0; n < Main.customers.size(); n++) {
 			// finds the lowest point which is not connected
 			largestY = -1;
@@ -123,7 +154,44 @@ public class Algorithms {
 			}
 			Main.bestPath.add(bestInsert, largestYIndex);
 		}
-		for (int repeat = 0; repeat < numRepeatFixes; repeat++) {
+
+		ReworkBestPath(minimizeTime);
+
+	}
+
+	public static void calculateLargestTimeFirst() {
+		Main.bestPath.clear();
+
+		for (int i = 0; i < Main.customers.size(); i++) {
+			int largestTime = -1;
+			int largestTimeIndex = -1;
+			for (int j = 0; j < Main.customers.size(); j++) {
+				Customer customer = Main.customers.get(j);
+				if (customer.waitTime > largestTime && !Main.bestPath.contains(j)) {
+					largestTime = customer.waitTime;
+					largestTimeIndex = j;
+				}
+			}
+			Main.bestPath.add(largestTimeIndex);
+		}
+		ReworkBestPath(true);
+	}
+
+	// Guaranteed perfect answer
+	public static void calculateBranchBound(ArrayList<Integer> customersLeft) {
+
+		if (customersLeft.size() == 0) {
+			// finished searching
+			// return
+		}
+
+		for (int i = 0; i < customersLeft.size(); i++) {
+
+		}
+	}
+
+	private static void ReworkBestPath(boolean minimizeTime) {
+		for (int repeat = 0; repeat < ControlPanel.repeatSteps; repeat++) {
 			for (int n = 0; n < Main.customers.size(); n++) {
 				// connects this point to the circle
 				Main.bestPath.removeAll(Collections.singleton(n));
@@ -148,19 +216,6 @@ public class Algorithms {
 				}
 				Main.bestPath.add(bestInsert, n);
 			}
-		}
-	}
-
-	// Guaranteed perfect answer
-	public static void calculateBranchBound(ArrayList<Integer> customersLeft) {
-
-		if (customersLeft.size() == 0) {
-			// finished searching
-			// return
-		}
-
-		for (int i = 0; i < customersLeft.size(); i++) {
-
 		}
 	}
 

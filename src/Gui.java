@@ -11,17 +11,18 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 public class Gui {
-	public static JFrame frame; // TODO: not static
 	public static JTextArea inputTextArea;
 	public static Map map;
 
 	private ControlPanel ctrlPanel;
 
-	private final int ctrlWidth = 160;
+	private final int ctrlWidth = 180;
 	private final int inputBoxHeight = 200;
 
+	// TODO: Add stats Page
+
 	public Gui() {
-		frame = new JFrame("Draw Graph");
+		JFrame frame = new JFrame("Draw Graph");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.pack();
 		frame.setSize(1200, 1300);
@@ -45,11 +46,13 @@ public class Gui {
 					return;
 				}
 				int customerID = Map.getCustomerClicked(e.getPoint());
-				if (e.getButton() == MouseEvent.BUTTON1 && !Main.bestPath.contains(customerID)) {
+				if (!Main.bestPath.contains(customerID)) {
 					Main.bestPath.add(customerID);
 				} else {
 					Main.bestPath.removeAll(Collections.singleton(customerID));
 				}
+
+				ctrlPanel.drawOutput();
 
 				map.drawPoints();
 				map.drawLines();

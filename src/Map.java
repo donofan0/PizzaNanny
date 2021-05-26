@@ -152,7 +152,7 @@ public class Map extends JLayeredPane {
 	}
 
 	public static float calculateTimeWaiting(Customer curCustomer, int pathIndex) {
-		if (Main.bestPath.isEmpty()) {
+		if (Main.bestPath.isEmpty() || pathIndex < 0) {
 			return -1;
 		}
 
@@ -177,6 +177,20 @@ public class Map extends JLayeredPane {
 
 		double[] output = { lateMins, distances[distances.length - 1] };
 		return output;
+	}
+
+	public static double calculateTime() {
+		double[] distances = CalculateTotalDistance(Main.bestPath);
+
+		float lateMins = 0;
+		for (int i = 0; i < Main.bestPath.size(); i++) {
+			Customer endCustomer = Main.customers.get(Main.bestPath.get(i));
+			float time = (float) (distances[i] / driverSpeed) + endCustomer.waitTime;
+			if (time > 30) {
+				lateMins += time - 30;
+			}
+		}
+		return lateMins;
 	}
 
 	public static double[] CalculateTotalDistance(List<Integer> path) {
