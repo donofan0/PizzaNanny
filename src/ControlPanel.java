@@ -20,14 +20,19 @@ public class ControlPanel extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = -8430168436937097596L;
-	boolean showAddress = false;
+
+	final static int convexHullRepeatSteps = 20;
+
 	static boolean showEmoji = false;
 	static boolean droneRunning = false;
-	final static int convexHullRepeatSteps = 20;
+
+	boolean editMode = false;
+	boolean showAddress = false;
 
 	public ControlPanel(Rectangle frame) {
 		this.setBounds(frame);
 		this.setSize(frame.getSize());
+		this.setBounds(frame);
 		this.setPreferredSize(frame.getSize());
 		this.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -52,7 +57,7 @@ public class ControlPanel extends JPanel {
 		c.gridy = 1;
 		this.add(progress, c);
 
-		JLabel punishment = new JLabel("Minues over 30: ");
+		JLabel punishment = new JLabel("Angry Minutes: ");
 		c.gridy = 2;
 		this.add(punishment, c);
 
@@ -100,15 +105,33 @@ public class ControlPanel extends JPanel {
 					emojiToggle.setText("Hide Emoji");
 				}
 
-				Gui.frame.getContentPane().remove(Gui.map);
-				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160));
-				Gui.frame.getContentPane().add(Gui.map);
+				Gui.map.drawPoints();
+
 				Gui.frame.validate();
 			}
 		});
 
-		JButton startDrone = new JButton("Start Drone");
+		JButton editModeToggle = new JButton("Start Edit Mode");
 		c.gridy = 7;
+		this.add(editModeToggle, c);
+		editModeToggle.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (editMode) {
+					editMode = false;
+					editModeToggle.setText("Start Edit Mode");
+				} else {
+					editMode = true;
+					editModeToggle.setText("Stop Edit Mode");
+
+					Main.bestPath.clear();
+					Gui.map.drawLines();
+					Gui.map.drawPoints();
+				}
+			}
+		});
+
+		JButton startDrone = new JButton("Start Drone");
+		c.gridy = 8;
 		this.add(startDrone, c);
 		startDrone.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -118,17 +141,19 @@ public class ControlPanel extends JPanel {
 				} else {
 					droneRunning = true;
 					startDrone.setText("stop Drone");
-					Gui.frame.getContentPane().remove(Gui.map);
-					Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160));
-					Gui.frame.getContentPane().add(Gui.map);
+
+					Gui.map.startDrone();
+
 					Gui.frame.validate();
 				}
 			}
 		});
 
+		// TODO: generate random points
+
 		JButton submit = new JButton("Submit");
 		submit.setPreferredSize(new Dimension(100, 20));
-		c.gridy = 8;
+		c.gridy = 9;
 		this.add(submit, c);
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -150,10 +175,7 @@ public class ControlPanel extends JPanel {
 				droneRunning = false;
 				startDrone.setText("Start Drone");
 
-				Gui.frame.getContentPane().remove(Gui.map);
-				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160));
-				Gui.frame.getContentPane().add(Gui.map);
-				Gui.frame.validate();
+				Gui.map.drawPoints();
 
 				int algSelected = algorithmSelect.getSelectedIndex();
 				switch (algSelected) {
@@ -177,12 +199,11 @@ public class ControlPanel extends JPanel {
 				drawOutput(outputTextArea);
 
 				double[] timeDistance = Map.calculateTimeDistance(Main.bestPath);
-				punishment.setText("Minues over 30: " + timeDistance[0]);
-				distance.setText("Total distance: " + timeDistance[1] + "m");
+				punishment.setText("Angry Minutes: " + Math.round(timeDistance[0]));
+				distance.setText("Total distance: " + Math.round(timeDistance[1]) + "m");
 
-				Gui.frame.getContentPane().remove(Gui.map);
-				Gui.map = new Map(new Rectangle(0, 0, Gui.frame.getWidth() - 200, Gui.frame.getHeight() - 160));
-				Gui.frame.getContentPane().add(Gui.map);
+				Gui.map.drawLines();
+
 				Gui.frame.validate();
 			}
 		});
@@ -190,13 +211,19 @@ public class ControlPanel extends JPanel {
 
 	public void drawOutput(JTextArea outputTextArea) {
 		String outputResult = "";
-		for (int i = 0; i < Main.bestPath.size(); i++) {
+		for (int i = 0; i < Main.bestPath.size() - 1; i++) {
 			outputResult += Main.customers.get(Main.bestPath.get(i)).id;
 			if (showAddress) {
 				outputResult += "(" + Main.customers.get(Main.bestPath.get(i)).address + ")";
 			}
-			outputResult += ", ";
+			outputResult += ",";
 		}
+
+		outputResult += Main.customers.get(Main.bestPath.get(Main.bestPath.size() - 1)).id;
+		if (showAddress) {
+			outputResult += "(" + Main.customers.get(Main.bestPath.get(Main.bestPath.size() - 1)).address + ")";
+		}
+
 		outputTextArea.setText(outputResult);
 	}
 }

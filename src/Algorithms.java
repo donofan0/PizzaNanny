@@ -3,7 +3,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class Algorithms {
-	// drivers speed it 1000 meters per minute
 
 	public static void calculateNearestNeighbor() {
 		Main.bestPath.clear();
@@ -11,7 +10,7 @@ public class Algorithms {
 		int nextCustomer = 0;
 		for (int i = 0; i < Main.customers.size(); i++) {
 			Customer customerNextPossibly = Main.customers.get(i);
-			double distance = Map.calculateDistance(Map.apachePizza, customerNextPossibly.location);
+			double distance = Map.apachePizza.distance(customerNextPossibly.location);
 			if (distance < shortestDistance) {
 				shortestDistance = distance;
 				nextCustomer = i;
@@ -29,7 +28,7 @@ public class Algorithms {
 					continue;
 				}
 				Customer customerNextPossibly = Main.customers.get(j);
-				double distance = Map.calculateDistance(curCustomer.location, customerNextPossibly.location);
+				double distance = curCustomer.location.distance(customerNextPossibly.location);
 				if (distance < shortestDist && !Main.bestPath.contains(j)) {
 					shortestDist = distance;
 					nextCus = j;

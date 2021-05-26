@@ -1,56 +1,89 @@
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.Collections;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 public class Gui {
-	public static JFrame frame;
-	public static Map map;
+	public static JFrame frame; // TODO: not static
 	public static JTextArea inputTextArea;
-	public static JPanel animation;
-	private ControlPanel controlPanel;
+	public static Map map;
+
+	private ControlPanel ctrlPanel;
+
+	private final int ctrlWidth = 160;
+	private final int inputBoxHeight = 200;
 
 	public Gui() {
 		frame = new JFrame("Draw Graph");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		// Display the window.
 		frame.pack();
 		frame.setSize(1200, 1300);
 		frame.setVisible(true);
 
-		map = new Map(new Rectangle(0, 0, frame.getWidth() - 200, frame.getHeight() - 160));
-		controlPanel = new ControlPanel(new Rectangle(frame.getWidth() - 200, 0, 200, frame.getHeight()));
+		Dimension frameSize = frame.getContentPane().getSize();
+
+		map = new Map(new Rectangle(0, 0, frameSize.width - ctrlWidth, frameSize.height - inputBoxHeight));
+		ctrlPanel = new ControlPanel(new Rectangle(frameSize.width - ctrlWidth, 0, ctrlWidth, frameSize.height));
 
 		inputTextArea = new JTextArea();
 		JScrollPane inputDeliverys = new JScrollPane(inputTextArea);
 		inputDeliverys.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		inputDeliverys.setBounds(
+				new Rectangle(0, frameSize.height - inputBoxHeight, frameSize.width - ctrlWidth, inputBoxHeight));
 
-		controlPanel.setBounds(new Rectangle(frame.getWidth() - 200, 0, 200, frame.getHeight() - 35));
-		inputDeliverys.setBounds(new Rectangle(0, frame.getHeight() - 160, frame.getWidth() - 200, 125));
+		map.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (!ctrlPanel.editMode) {
+					return;
+				}
+				int customerID = Map.getCustomerClicked(e.getPoint());
+				if (e.getButton() == MouseEvent.BUTTON1 && !Main.bestPath.contains(customerID)) {
+					Main.bestPath.add(customerID);
+				} else {
+					Main.bestPath.removeAll(Collections.singleton(customerID));
+				}
 
-		frame.getContentPane().add(controlPanel);
+				map.drawPoints();
+				map.drawLines();
+			}
+
+			public void mousePressed(MouseEvent e) {
+			}
+
+			public void mouseReleased(MouseEvent e) {
+			}
+
+			public void mouseEntered(MouseEvent e) {
+			}
+
+			public void mouseExited(MouseEvent e) {
+			}
+		});
+
+		frame.getContentPane().add(ctrlPanel);
 		frame.getContentPane().add(inputDeliverys);
 		frame.getContentPane().add(map);
 
-		// sets up the animation glass Pane
-		animation = new JPanel(null);
-		frame.setGlassPane(animation);
-		animation.setVisible(true);
-		animation.setOpaque(false);
-
 		frame.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent componentEvent) {
-				controlPanel.setBounds(new Rectangle(frame.getWidth() - 200, 0, 200, frame.getHeight() - 35));
-				inputDeliverys.setBounds(new Rectangle(0, frame.getHeight() - 160, frame.getWidth() - 200, 125));
+				Dimension frameSize = frame.getContentPane().getSize();
 
-				frame.getContentPane().remove(map);
-				map = new Map(new Rectangle(0, 0, frame.getWidth() - 200, frame.getHeight() - 160));
-				frame.getContentPane().add(map);
+				ctrlPanel.setBounds(new Rectangle(frameSize.width - ctrlWidth, 0, ctrlWidth, frameSize.height));
+				inputDeliverys.setBounds(new Rectangle(0, frameSize.height - inputBoxHeight,
+						frameSize.width - ctrlWidth, inputBoxHeight));
+
+				Rectangle mapDemensions = new Rectangle(0, 0, frameSize.width - ctrlWidth,
+						frameSize.height - inputBoxHeight);
+				map.reSizeMap(mapDemensions);
+
 				frame.validate();
 			}
 		});

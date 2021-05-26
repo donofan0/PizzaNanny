@@ -28,22 +28,59 @@ public class Map extends JLayeredPane {
 	 * 
 	 */
 	private static final long serialVersionUID = -2755569004426869297L;
+
+	private JPanel mapImagePanel;
+	private Points points;
+	private Lines lines;
+	private Drone drone;
+	private Rectangle mapSize;
+
 	final static double earthRadius = 6371.0070072;
-	final static Point2D.Double topLeftMap = new Point2D.Double(-6.714, 53.411);
+
+	final static Point2D.Double topLeftMap = new Point2D.Double(-6.714, 53.4105);
 	final static Point bottomRigthMap = new Point(longitudeToX(-6.4546), latitudeToY(53.2857));
 	final static Point apachePizza = new Point(longitudeToX(-6.59296), latitudeToY(53.381176));
-	final static float aspectRatio = 1.23672055427f;
 	final static int driverSpeed = 1000; // meters per minute
-	static boolean constrainWidth = true;
+
+	final static float aspectRatio = 1.23672055427f; // aspect ratio of the map decides when to constrain width
+	static double scaleFactor;
 
 	Map(Rectangle frame) {
-		JPanel mapImagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		if (frame.width > frame.height * aspectRatio) {
-			constrainWidth = false;
-		} else {
-			constrainWidth = true;
-		}
+		mapImagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		lines = new Lines();
+		points = new Points();
 
+		reSizeMap(frame);
+
+		this.add(mapImagePanel, JLayeredPane.DEFAULT_LAYER);
+		this.add(lines, JLayeredPane.PALETTE_LAYER);
+		this.add(points, JLayeredPane.MODAL_LAYER);
+	}
+
+	public void drawPoints() {
+		points.setBounds(mapSize);
+		points.repaint();
+	}
+
+	public void drawLines() {
+		lines.setBounds(mapSize);
+		lines.repaint();
+	}
+
+	public void startDrone() {
+		drone = new Drone(mapSize.getSize());
+		drone.setBounds(mapSize);
+		drone.setOpaque(false);
+
+		this.remove(drone);
+		this.add(drone, JLayeredPane.POPUP_LAYER);
+	}
+
+	public void reSizeMap(Rectangle frame) {
+		mapSize = frame;
+		this.setBounds(mapSize);
+
+		mapImagePanel.removeAll();
 		BufferedImage myPicture = null;
 		JLabel picLabel;
 		try {
@@ -52,37 +89,22 @@ public class Map extends JLayeredPane {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if (constrainWidth) {
-			picLabel = new JLabel(new ImageIcon(myPicture.getScaledInstance(frame.width, -1, Image.SCALE_SMOOTH)));
+
+		if (mapSize.width > mapSize.height * aspectRatio) {
+			// height based
+			scaleFactor = (double) mapSize.height / Map.bottomRigthMap.y;
+			picLabel = new JLabel(new ImageIcon(myPicture.getScaledInstance(-1, this.getHeight(), Image.SCALE_SMOOTH)));
 		} else {
-			picLabel = new JLabel(new ImageIcon(myPicture.getScaledInstance(-1, frame.height, Image.SCALE_SMOOTH)));
+			// width based
+			scaleFactor = (double) mapSize.width / Map.bottomRigthMap.x;
+			picLabel = new JLabel(new ImageIcon(myPicture.getScaledInstance(this.getWidth(), -1, Image.SCALE_SMOOTH)));
 		}
-		picLabel.setBounds(frame);
-		mapImagePanel.setBounds(frame);
+
+		mapImagePanel.setBounds(mapSize);
 		mapImagePanel.add(picLabel, 0);
 
-		Lines lines = new Lines();
-		lines.setPreferredSize(frame.getSize());
-		lines.setBounds(frame);
-		lines.setOpaque(false);
-
-		Points points = new Points();
-		points.setPreferredSize(frame.getSize());
-		points.setBounds(frame);
-		points.setOpaque(false);
-
-		this.setBounds(frame);
-		this.add(mapImagePanel, JLayeredPane.DEFAULT_LAYER);
-		this.add(lines, JLayeredPane.PALETTE_LAYER);
-		this.add(points, JLayeredPane.MODAL_LAYER);
-
-		if (ControlPanel.droneRunning) {
-			Drone drone = new Drone(frame.getSize());
-			drone.setPreferredSize(frame.getSize());
-			drone.setBounds(frame);
-			drone.setOpaque(false);
-			this.add(drone, JLayeredPane.POPUP_LAYER);
-		}
+		drawPoints();
+		drawLines();
 	}
 
 	public static double absDiffRad(double in1, double in2) {
@@ -91,10 +113,6 @@ public class Map extends JLayeredPane {
 			diff = -diff;
 		}
 		return diff;
-	}
-
-	public static double calculateDistance(Point in1, Point in2) {
-		return Math.sqrt(Math.pow((in2.x - in1.x), 2) + Math.pow((in2.y - in1.y), 2));
 	}
 
 	public static double calculateSlope(Point in1, Point in2) {
@@ -134,6 +152,10 @@ public class Map extends JLayeredPane {
 	}
 
 	public static float calculateTimeWaiting(Customer curCustomer, int pathIndex) {
+		if (Main.bestPath.isEmpty()) {
+			return -1;
+		}
+
 		double[] distances = CalculateTotalDistance(Main.bestPath.subList(0, pathIndex + 1));
 		float time = (float) (distances[distances.length - 1] / driverSpeed) + curCustomer.waitTime;
 		return time;
@@ -168,7 +190,7 @@ public class Map extends JLayeredPane {
 				start = Main.customers.get(path.get(i - 1)).location;
 				end = Main.customers.get(path.get(i)).location;
 			}
-			double distance = Map.calculateDistance(start, end);
+			double distance = start.distance(end);
 			if (i == 0) {
 				distances[i] = distance;
 			} else {
@@ -177,6 +199,24 @@ public class Map extends JLayeredPane {
 		}
 		return distances;
 	}
+
+	public static Point scalePoint(Point point) {
+		return new Point((int) Math.round(point.x * scaleFactor), (int) Math.round(point.y * scaleFactor));
+	}
+
+	public static int getCustomerClicked(Point point) {
+		int nearestCustomerIndex = 0;
+		double nearestDistance = 999999999;
+		for (int i = 0; i < Main.customers.size(); i++) {
+			Customer customer = Main.customers.get(i);
+			double distance = point.distance(scalePoint(customer.location));
+			if (distance < nearestDistance) {
+				nearestDistance = distance;
+				nearestCustomerIndex = i;
+			}
+		}
+		return nearestCustomerIndex;
+	}
 }
 
 class Points extends JComponent {
@@ -184,39 +224,33 @@ class Points extends JComponent {
 	 * 
 	 */
 	private static final long serialVersionUID = -1035389041198415412L;
-	double scaleFactor;
 
 	@Override
 	public void paint(Graphics g) {
 		// Draw a simple line using the Graphics2D draw() method.
 		Graphics2D g2 = (Graphics2D) g;
 
-		// scale factors = pixels per meter
-		if (Map.constrainWidth) {
-			scaleFactor = (double) g2.getClipBounds().width / Map.bottomRigthMap.x;
-		} else {
-			scaleFactor = (double) g2.getClipBounds().height / Map.bottomRigthMap.y;
-		}
-
 		for (int i = 0; i < Main.customers.size(); i++) {
 			Customer customer = Main.customers.get(i);
-			int x = (int) Math.round(customer.location.x * scaleFactor);
-			int y = (int) Math.round(customer.location.y * scaleFactor);
+			Point point = Map.scalePoint(customer.location);
 			if (ControlPanel.showEmoji) {
-				g2.drawImage(Images.getEmoji(Map.calculateTimeWaiting(customer, Main.bestPath.indexOf(i))), x - 8,
-						y - 8, 16, 16, null);
+				float time = Map.calculateTimeWaiting(customer, Main.bestPath.indexOf(i));
+				if (time >= 0) {
+					g2.drawImage(Images.getEmoji(time), point.x - 8, point.y - 8, 16, 16, null);
+				} else {
+					g2.fillOval(point.x - 5, point.y - 5, 10, 10);
+				}
 			} else {
-				g2.fillOval(x - 5, y - 5, 10, 10);
+				g2.fillOval(point.x - 5, point.y - 5, 10, 10);
 			}
 
 			g2.setFont(getFont().deriveFont(10f));
-			g2.drawString("" + customer.id, x + 8, y - 3);
+			g2.drawString("" + customer.id, point.x + 8, point.y - 3);
 		}
 
-		int x = (int) Math.round(Map.apachePizza.x * scaleFactor);
-		int y = (int) Math.round(Map.apachePizza.y * scaleFactor);
+		Point point = Map.scalePoint(Map.apachePizza);
 		g2.setColor(Color.RED);
-		g2.fillOval(x - 5, y - 5, 10, 10);
+		g2.fillOval(point.x - 5, point.y - 5, 10, 10);
 	}
 }
 
@@ -225,32 +259,26 @@ class Lines extends JComponent {
 	 * 
 	 */
 	private static final long serialVersionUID = 2255340471176749645L;
-	double scaleFactor;
 
 	@Override
 	public void paint(Graphics g) {
 		// Draw a simple line using the Graphics2D draw() method.
 		Graphics2D g2 = (Graphics2D) g;
 
-		// scale factors = pixels per meter
-		if (Map.constrainWidth) {
-			scaleFactor = (double) g2.getClipBounds().width / Map.bottomRigthMap.x;
-		} else {
-			scaleFactor = (double) g2.getClipBounds().height / Map.bottomRigthMap.y;
-		}
-
 		for (int i = 0; i < Main.bestPath.size(); i++) {
-			Point start = Map.apachePizza;
-			// start = Main.customers.get(Main.bestPath.get(i)).location; //TODO Remove
-			Point end = Main.customers.get(Main.bestPath.get(i)).location;
-			if (i != 0) {
-				start = Main.customers.get(Main.bestPath.get(i - 1)).location;
-				end = Main.customers.get(Main.bestPath.get(i)).location;
+
+			Point start;
+			Point end;
+			if (i == 0) {
+				start = Map.scalePoint(Map.apachePizza);
+				end = Map.scalePoint(Main.customers.get(Main.bestPath.get(i)).location);
+			} else {
+				start = Map.scalePoint(Main.customers.get(Main.bestPath.get(i - 1)).location);
+				end = Map.scalePoint(Main.customers.get(Main.bestPath.get(i)).location);
 			}
 
 			g2.setColor(Color.BLUE);
-			g2.draw(new Line2D.Double(start.x * scaleFactor, start.y * scaleFactor, end.x * scaleFactor,
-					end.y * scaleFactor));
+			g2.draw(new Line2D.Double(start.x, start.y, end.x, end.y));
 		}
 	}
 }
@@ -261,26 +289,18 @@ class Drone extends JPanel {
 	 */
 	private static final long serialVersionUID = 2255340493176749645L;
 	final int droneSpeedScale = 60;
-	double scaleFactor;
 	JLabel drone;
 
 	Drone(Dimension size) {
-		// scale factors = pixels per meter
-		if (Map.constrainWidth) {
-			scaleFactor = size.getWidth() / Map.bottomRigthMap.x;
-		} else {
-			scaleFactor = size.getHeight() / Map.bottomRigthMap.y;
-		}
 
 		Point start = Map.apachePizza;
 		Point end = Main.customers.get(Main.bestPath.get(0)).location;
 		drone = new JLabel(new ImageIcon(Images.drone2Pizza));
 		drone.setSize(60, 60);
-		drone.setVisible(true);
 		this.add(drone);
-		doAnimation(new Rectangle2D.Double(start.x * scaleFactor - 30, start.y * scaleFactor - 30, 60, 60),
-				new Point2D.Double(end.x * scaleFactor - 30, end.y * scaleFactor - 30),
-				Map.calculateDistance(start, end), 0);
+		drone.setVisible(true);
+		doAnimation(new Rectangle2D.Double(start.x * Map.scaleFactor - 30, start.y * Map.scaleFactor - 30, 60, 60),
+				new Point2D.Double(end.x * Map.scaleFactor - 30, end.y * Map.scaleFactor - 30), start.distance(end), 0);
 	}
 
 	private void doAnimation(Rectangle2D.Double start, Point2D.Double end, double distance, int curIndex) {
@@ -352,14 +372,14 @@ class Drone extends JPanel {
 				if (curIndex + 1 < Main.bestPath.size() && ControlPanel.droneRunning) {
 					Point startNew = Main.customers.get(Main.bestPath.get(curIndex)).location;
 					start.setFrame(startNew, getSize());
-					start.x = start.x * scaleFactor - start.width / 2;
-					start.y = start.y * scaleFactor - start.height / 2;
+					start.x = start.x * Map.scaleFactor - start.width / 2;
+					start.y = start.y * Map.scaleFactor - start.height / 2;
 
 					Point endNew = Main.customers.get(Main.bestPath.get(curIndex + 1)).location;
-					end.x = endNew.x * scaleFactor - start.width / 2;
-					end.y = endNew.y * scaleFactor - start.height / 2;
+					end.x = endNew.x * Map.scaleFactor - start.width / 2;
+					end.y = endNew.y * Map.scaleFactor - start.height / 2;
 
-					doAnimation(start, end, Map.calculateDistance(startNew, endNew), curIndex + 1);
+					doAnimation(start, end, startNew.distance(endNew), curIndex + 1);
 				} else {
 					drone.setVisible(false);
 				}
