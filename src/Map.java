@@ -302,7 +302,7 @@ class Drone extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = 2255340493176749645L;
-	final int droneSpeedScale = 60;
+	final int droneSpeedScale = 60 * 10;
 	JLabel drone;
 
 	Drone(Dimension size) {
@@ -331,6 +331,10 @@ class Drone extends JPanel {
 
 			@Override
 			protected Boolean doInBackground() throws Exception {
+				if (Double.isNaN(xDelta) || Double.isNaN(yDelta)) {
+					running = false;
+				}
+
 				while (running && ControlPanel.droneRunning) {
 					boolean xDone = false; // records when it has reached its target x
 					boolean yDone = false; // records when it has reached its target y
@@ -374,14 +378,13 @@ class Drone extends JPanel {
 				 */
 				Rectangle2D.Double val = (java.awt.geom.Rectangle2D.Double) chunks.get(chunks.size() - 1);
 				drone.setBounds(val.getBounds());
-				Gui.map.repaint();
+				// Gui.map.repaint();
 			}
 
 			@Override
 			protected void done() {
 				// this method is called when the background
 				// thread finishes execution
-				System.out.println("Finished");
 
 				if (curIndex + 1 < Main.bestPath.size() && ControlPanel.droneRunning) {
 					Point startNew = Main.customers.get(Main.bestPath.get(curIndex)).location;

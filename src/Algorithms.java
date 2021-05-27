@@ -10,7 +10,7 @@ public class Algorithms {
 
 	public static String[] compareAlogrithemsWithResults() {
 		String[] output = new String[algorithms.length];
-		output[0] = "|          Algorithm         | Distance | Angry Mins | Jurney Time(HH:MM) | Proccessing Time(MM:ms) |";
+		output[0] = "|          Algorithm         | Distance | Angry Mins | Journey Time(HH:MM) | Proccessing Time(MM:ms) |";
 		for (int i = 0; i < algorithms.length - 1; i++) {
 			long startTime = System.currentTimeMillis();
 
@@ -45,7 +45,7 @@ public class Algorithms {
 			output[i + 1] = convertToTable(algorithms[i], 28);
 			output[i + 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
 			output[i + 1] += convertToTable(numFormat.format(timeDistance[0]) + " sec", 12);
-			output[i + 1] += convertToTable(hour + ":" + min, 20);
+			output[i + 1] += convertToTable(hour + ":" + min, 21);
 			output[i + 1] += convertToTable(timeFromat.format(currentTime - startTime), 25);
 			output[i + 1] += "|";
 		}

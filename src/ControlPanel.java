@@ -137,7 +137,7 @@ public class ControlPanel extends JPanel {
 					startDrone.setText("Start Drone");
 				} else {
 					droneRunning = true;
-					startDrone.setText("stop Drone");
+					startDrone.setText("Stop Drone");
 
 					Gui.map.startDrone();
 				}
