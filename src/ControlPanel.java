@@ -184,7 +184,6 @@ public class ControlPanel extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				String[] input = Gui.inputTextArea.getText().trim().split("\\n");
 				Main.customers.clear();
-				Main.bestPath.clear();
 				for (int x = 0; x < input.length; x++) {
 					String[] currentLine = input[x].split(",");
 					if (currentLine.length < 5) {
@@ -222,6 +221,9 @@ public class ControlPanel extends JPanel {
 				case 4:
 					Algorithms.calculateLargestTimeFirst();
 					break;
+				case 5:
+					Algorithms.calculateDepthFirstSearch();
+					break;
 				default:
 					int best = Algorithms.compareAlogrithems();
 					bestAlgorithem.setText("Best: " + algorithmSelect.getItemAt(best));
@@ -240,7 +242,7 @@ public class ControlPanel extends JPanel {
 			return;
 		}
 
-		double[] timeDistance = Map.calculateTimeDistance(Main.bestPath);
+		double[] timeDistance = Map.calculateTimeDistance();
 		punishment.setText("Angry Minutes: " + Math.round(timeDistance[0]));
 		distance.setText("Total distance: " + Math.round(timeDistance[1]) + "m");
 

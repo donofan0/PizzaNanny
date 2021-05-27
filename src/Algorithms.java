@@ -6,11 +6,11 @@ import java.util.Collections;
 
 public class Algorithms {
 	public final static String[] algorithms = { "Nearest Neighbor(Distance)", "Nearest Neighbor(Time)",
-			"Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "All of the Above" };
+			"Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "Depth First Search", "All of the Above" };
 
 	public static String[] compareAlogrithemsWithResults() {
 		String[] output = new String[algorithms.length];
-		output[0] = "|          Algorithm         | Distance | Angry Mins | Journey Time(HH:MM) | Proccessing Time(MM:ms) |";
+		output[0] = "|          Algorithm         | Distance | Angry Mins | Journey Time(hh:mm) | Proccessing Time(mm:ss:ms) |";
 		for (int i = 0; i < algorithms.length - 1; i++) {
 			long startTime = System.currentTimeMillis();
 
@@ -30,23 +30,26 @@ public class Algorithms {
 			case 4:
 				calculateLargestTimeFirst();
 				break;
+			case 5:
+				calculateDepthFirstSearch();
+				break;
 			}
 
 			long currentTime = System.currentTimeMillis();
 			NumberFormat numFormat = NumberFormat.getInstance();
 			numFormat.setMaximumFractionDigits(0);
 			numFormat.setMinimumIntegerDigits(2);
-			SimpleDateFormat timeFromat = new SimpleDateFormat("ss:SSS");
+			SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
 
-			double[] timeDistance = Map.calculateTimeDistance(Main.bestPath);
+			double[] timeDistance = Map.calculateTimeDistance();
 			String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
 			String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
 
 			output[i + 1] = convertToTable(algorithms[i], 28);
 			output[i + 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
-			output[i + 1] += convertToTable(numFormat.format(timeDistance[0]) + " sec", 12);
+			output[i + 1] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
 			output[i + 1] += convertToTable(hour + ":" + min, 21);
-			output[i + 1] += convertToTable(timeFromat.format(currentTime - startTime), 25);
+			output[i + 1] += convertToTable(timeFromat.format(currentTime - startTime), 28);
 			output[i + 1] += "|";
 		}
 		return output;
@@ -72,6 +75,9 @@ public class Algorithms {
 			case 4:
 				calculateLargestTimeFirst();
 				break;
+			case 5:
+				calculateDepthFirstSearch();
+				break;
 			}
 			double time = Map.calculateTime();
 			if (time < bestTime) {
@@ -95,6 +101,9 @@ public class Algorithms {
 			break;
 		case 4:
 			calculateLargestTimeFirst();
+			break;
+		case 5:
+			calculateDepthFirstSearch();
 			break;
 		}
 		return bestAlgorithem;
@@ -226,16 +235,46 @@ public class Algorithms {
 	}
 
 	// Guaranteed perfect answer
-	public static void calculateBranchBound(ArrayList<Integer> customersLeft) {
-
-		if (customersLeft.size() == 0) {
-			// finished searching
-			// return
+	public static void calculateDepthFirstSearch() {
+		int[] path = new int[Main.customers.size()];
+		for (int i = 0; i < Main.customers.size(); i++) {
+			path[i] = i;
 		}
 
-		for (int i = 0; i < customersLeft.size(); i++) {
+		int[] swapWith = new int[Main.customers.size()];
+		int i = 0;
+		// long count = 0;
+		float bestTime = 999999999;
+		while (i < swapWith.length) {
+			if (swapWith[i] < i) {
+				if (i % 2 == 0) {
+					int temp = path[i];
+					path[i] = path[0];
+					path[0] = temp;
+				} else {
+					int temp = path[i];
+					path[i] = path[swapWith[i]];
+					path[swapWith[i]] = temp;
+				}
 
+				float time = Map.calculateTimeUpTo(path, bestTime);
+				if (time < bestTime) {
+					Main.bestPath.clear();
+					for (int j = 0; j < path.length; j++) {
+						Main.bestPath.add(path[j]);
+					}
+					bestTime = time;
+				}
+
+				// count++;
+				swapWith[i]++;
+				i = 0;
+			} else {
+				swapWith[i] = 0;
+				i++;
+			}
 		}
+		// System.out.println(count);
 	}
 
 	private static void ReworkBestPath(boolean minimizeTime) {

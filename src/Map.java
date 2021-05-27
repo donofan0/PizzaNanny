@@ -166,10 +166,10 @@ public class Map extends JLayeredPane {
 	public static double[] calculateTimeDistance(ArrayList<Integer> path) {
 		double[] distances = CalculateTotalDistance(path);
 
-		float lateMins = 0;
+		double lateMins = 0;
 		for (int i = 0; i < path.size(); i++) {
 			Customer endCustomer = Main.customers.get(path.get(i));
-			float time = (float) (distances[i] / driverSpeed) + endCustomer.waitTime;
+			double time = (distances[i] / driverSpeed) + endCustomer.waitTime;
 			if (time > 30) {
 				lateMins += time - 30;
 			}
@@ -179,15 +179,41 @@ public class Map extends JLayeredPane {
 		return output;
 	}
 
-	public static double calculateTime() {
-		double[] distances = CalculateTotalDistance(Main.bestPath);
+	public static double[] calculateTimeDistance() {
+		return calculateTimeDistance(Main.bestPath);
+	}
 
+	public static double calculateTime(ArrayList<Integer> path) {
+		return calculateTimeDistance(path)[0];
+	}
+
+	public static double calculateTime() {
+		return calculateTimeDistance(Main.bestPath)[0];
+	}
+
+	public static float calculateTimeUpTo(int[] path, float max) {
+		float lastDistance = 0;
 		float lateMins = 0;
-		for (int i = 0; i < Main.bestPath.size(); i++) {
-			Customer endCustomer = Main.customers.get(Main.bestPath.get(i));
-			float time = (float) (distances[i] / driverSpeed) + endCustomer.waitTime;
+		for (int i = 0; i < path.length; i++) {
+			Customer endCustomer = Main.customers.get(path[i]);
+			Point start = Map.apachePizza;
+			Point end = endCustomer.location;
+			if (i != 0) {
+				start = Main.customers.get(path[i - 1]).location;
+				end = Main.customers.get(path[i]).location;
+			}
+
+			float distance = (float) start.distance(end);
+			distance += lastDistance;
+			lastDistance = distance;
+
+			double time = (distance / driverSpeed) + endCustomer.waitTime;
 			if (time > 30) {
 				lateMins += time - 30;
+			}
+
+			if (lateMins >= max) {
+				return lateMins;
 			}
 		}
 		return lateMins;
@@ -198,7 +224,6 @@ public class Map extends JLayeredPane {
 		for (int i = 0; i < path.size(); i++) {
 			Customer endCustomer = Main.customers.get(path.get(i));
 			Point start = Map.apachePizza;
-			// start = endCustomer.location; //TODO Remove
 			Point end = endCustomer.location;
 			if (i != 0) {
 				start = Main.customers.get(path.get(i - 1)).location;

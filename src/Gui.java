@@ -121,6 +121,8 @@ public class Gui {
 		listScroller.setPreferredSize(new Dimension(250, 80));
 		comparePanel.add(listScroller, BorderLayout.CENTER);
 
+		// TODO:click list draws on map
+
 		JButton close = new JButton("Close");
 		comparePanel.add(close, BorderLayout.SOUTH);
 		close.addActionListener(new ActionListener() {
