@@ -1,13 +1,61 @@
 import java.awt.Point;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class Algorithms {
+	public final static String[] algorithms = { "Nearest Neighbor(Distance)", "Nearest Neighbor(Time)",
+			"Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "All of the Above" };
+
+	public static String[] compareAlogrithemsWithResults() {
+		String[] output = new String[algorithms.length];
+		output[0] = "|          Algorithm         | Distance | Angry Mins | Jurney Time(HH:MM) | Proccessing Time(MM:ms) |";
+		for (int i = 0; i < algorithms.length - 1; i++) {
+			long startTime = System.currentTimeMillis();
+
+			switch (i) {
+			case 0:
+				calculateNearestNeighbor(false);
+				break;
+			case 1:
+				calculateNearestNeighbor(true);
+				break;
+			case 2:
+				calculateConvexHull(false);
+				break;
+			case 3:
+				calculateConvexHull(true);
+				break;
+			case 4:
+				calculateLargestTimeFirst();
+				break;
+			}
+
+			long currentTime = System.currentTimeMillis();
+			NumberFormat numFormat = NumberFormat.getInstance();
+			numFormat.setMaximumFractionDigits(0);
+			numFormat.setMinimumIntegerDigits(2);
+			SimpleDateFormat timeFromat = new SimpleDateFormat("ss:SSS");
+
+			double[] timeDistance = Map.calculateTimeDistance(Main.bestPath);
+			String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
+			String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
+
+			output[i + 1] = convertToTable(algorithms[i], 28);
+			output[i + 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
+			output[i + 1] += convertToTable(numFormat.format(timeDistance[0]) + " sec", 12);
+			output[i + 1] += convertToTable(hour + ":" + min, 20);
+			output[i + 1] += convertToTable(timeFromat.format(currentTime - startTime), 25);
+			output[i + 1] += "|";
+		}
+		return output;
+	}
 
 	public static int compareAlogrithems() {
 		int bestAlgorithem = 0;
 		double bestTime = 999999999;
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < algorithms.length - 1; i++) {
 			switch (i) {
 			case 0:
 				calculateNearestNeighbor(false);
@@ -259,5 +307,33 @@ public class Algorithms {
 			}
 		}
 		return LeftMostPointIndex;
+	}
+
+	private static String convertToTable(String input, int colmbWidth) {
+		int spaceNum = colmbWidth - input.length();
+		boolean even = true;
+		if (spaceNum % 2 == 0) {
+			spaceNum /= 2;
+		} else {
+			spaceNum -= 1;
+			spaceNum /= 2;
+			even = false;
+		}
+
+		String output = "|";
+
+		if (!even) {
+			output += " ";
+		}
+
+		for (int i = 0; i < spaceNum; i++) {
+			output += " ";
+		}
+		output += input;
+		for (int i = 0; i < spaceNum; i++) {
+			output += " ";
+		}
+
+		return output;
 	}
 }

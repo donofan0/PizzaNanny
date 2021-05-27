@@ -44,7 +44,7 @@ public class ControlPanel extends JPanel {
 		// Default constants
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.NORTHWEST;
-		c.insets = new Insets(10, 10, 10, 10);
+		c.insets = new Insets(4, 4, 4, 4);
 		c.weightx = 1;
 		c.weighty = 1;
 		c.gridwidth = 2;
@@ -52,9 +52,7 @@ public class ControlPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 0;
 
-		String[] algorithems = { "Nearest Neighbor(Distance)", "Nearest Neighbor(Time)", "Convex Hull(Distance)",
-				"Convex Hull(Time)", "Largest Time", "All of the Above" };
-		JComboBox<String> algorithmSelect = new JComboBox<String>(algorithems);
+		JComboBox<String> algorithmSelect = new JComboBox<String>(Algorithms.algorithms);
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
 		this.add(algorithmSelect, c);
 
@@ -90,8 +88,7 @@ public class ControlPanel extends JPanel {
 		outputTextArea.setLineWrap(true);
 		JScrollPane outputDeliverys = new JScrollPane(outputTextArea);
 		outputDeliverys.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		// outputDeliverys.setPreferredSize(new Dimension(100, 100));
-		c.weighty = 40;
+		c.weighty = 90;
 		c.gridy++;
 		this.add(outputDeliverys, c);
 
@@ -130,6 +127,23 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
+		JButton startDrone = new JButton("Start Drone");
+		c.gridy++;
+		this.add(startDrone, c);
+		startDrone.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (droneRunning) {
+					droneRunning = false;
+					startDrone.setText("Start Drone");
+				} else {
+					droneRunning = true;
+					startDrone.setText("stop Drone");
+
+					Gui.map.startDrone();
+				}
+			}
+		});
+
 		JButton editModeToggle = new JButton("Start Edit Mode");
 		c.gridy++;
 		this.add(editModeToggle, c);
@@ -149,19 +163,13 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
-		JButton startDrone = new JButton("Start Drone");
+		JButton openComparison = new JButton("Open Comparison");
 		c.gridy++;
-		this.add(startDrone, c);
-		startDrone.addActionListener(new ActionListener() {
+		this.add(openComparison, c);
+		openComparison.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (droneRunning) {
-					droneRunning = false;
-					startDrone.setText("Start Drone");
-				} else {
-					droneRunning = true;
-					startDrone.setText("stop Drone");
-
-					Gui.map.startDrone();
+				if (!Main.customers.isEmpty()) {
+					Gui.startComparisionWindow();
 				}
 			}
 		});
