@@ -2,7 +2,7 @@ import java.awt.Point;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.List;
 
 import javax.swing.ListModel;
 import javax.swing.SwingWorker;
@@ -15,7 +15,7 @@ public class Algorithms {
 	public static String[] compareAlogrithemsWithResults() {
 		String[] output = new String[algorithms.length];
 		output[0] = "|          Algorithm         | Distance | Angry Mins | Journey Time(hh:mm) | Proccessing Time(mm:ss:ms) |";
-		for (int i = 0; i < algorithms.length - 1; i++) {
+		for (int i = 0; i < algorithms.length - 2; i++) {
 			long startTime = System.currentTimeMillis();
 
 			switch (i) {
@@ -33,9 +33,6 @@ public class Algorithms {
 				break;
 			case 4:
 				calculateLargestTimeFirst();
-				break;
-			case 5:
-				calculateDepthFirstSearch();
 				break;
 			}
 
@@ -56,14 +53,17 @@ public class Algorithms {
 			output[i + 1] += convertToTable(timeFromat.format(currentTime - startTime), 28);
 			output[i + 1] += "|";
 		}
-		calculateDepthFirstSearchAsync();
+
+		calculateDepthFirstSearch();
+
 		return output;
 	}
 
 	public static int compareAlogrithems() {
 		int bestAlgorithem = 0;
 		double bestTime = 999999999;
-		for (int i = 0; i < algorithms.length - 1; i++) {
+		int[][] algoritemsPaths = new int[algorithms.length - 2][Main.customers.length];
+		for (int i = 0; i < algorithms.length - 2; i++) {
 			switch (i) {
 			case 0:
 				calculateNearestNeighbor(false);
@@ -80,37 +80,19 @@ public class Algorithms {
 			case 4:
 				calculateLargestTimeFirst();
 				break;
-			case 5:
-				calculateDepthFirstSearch();
-				break;
 			}
+
 			double time = Map.calculateTime();
 			if (time < bestTime) {
 				bestAlgorithem = i;
 				bestTime = time;
 			}
+
+			algoritemsPaths[i] = Main.bestPath;
 		}
 
-		switch (bestAlgorithem) {
-		case 0:
-			calculateNearestNeighbor(false);
-			break;
-		case 1:
-			calculateNearestNeighbor(true);
-			break;
-		case 2:
-			calculateConvexHull(false);
-			break;
-		case 3:
-			calculateConvexHull(true);
-			break;
-		case 4:
-			calculateLargestTimeFirst();
-			break;
-		case 5:
-			calculateDepthFirstSearch();
-			break;
-		}
+		Main.bestPath = algoritemsPaths[bestAlgorithem];
+
 		return bestAlgorithem;
 	}
 
@@ -243,108 +225,11 @@ public class Algorithms {
 
 	// Guaranteed perfect answer
 	public static void calculateDepthFirstSearch() {
-		Main.bestPath = new int[Main.customers.length];
-
-		int[] path = new int[Main.customers.length];
-		for (int i = 0; i < Main.customers.length; i++) {
-			path[i] = i;
-			Main.bestPath[i] = i;
-		}
-		float bestTime = calculateTimeUpTo(path, 999999999);
-
-//		int[] swapWith = new int[Main.customers.length];
-//		int i = 0;
-//		// long count = 0;
-//		while (i < swapWith.length) {
-//			if (swapWith[i] < i) {
-//				if (i % 2 == 0) {
-//					int temp = path[i];
-//					path[i] = path[0];
-//					path[0] = temp;
-//				} else {
-//					int temp = path[i];
-//					path[i] = path[swapWith[i]];
-//					path[swapWith[i]] = temp;
-//				}
-//
-//				float time = calculateTimeUpTo(path, bestTime);
-//				if (time < bestTime) {
-//					for (int j = 0; j < path.length; j++) {
-//						Main.bestPath[j] = path[j];
-//					}
-//					bestTime = time;
-//				}
-//				// count++;
-//				swapWith[i]++;
-//				i = 0;
-//			} else {
-//				swapWith[i] = 0;
-//				i++;
-//			}
-//		}
-		// System.out.println(count);
-	}
-
-	private static void calculateDepthFirstSearchAsync() {
-		ConcurrentLinkedQueue<int[]> pathQueue = new ConcurrentLinkedQueue<int[]>();
-		Algorithms.algorithemRunning = true;
-
-		SwingWorker<Boolean, int[]> findTimes = new SwingWorker<Boolean, int[]>() {
+		SwingWorker<Boolean, Long> findPaths = new SwingWorker<Boolean, Long>() {
 			private float bestTime = 999999999;
 			private long startTime = System.currentTimeMillis();
+			private long maxIterations = -1;
 
-			@Override
-			protected Boolean doInBackground() throws Exception {
-				while (Algorithms.algorithemRunning || !pathQueue.isEmpty()) {
-					while (pathQueue.isEmpty()) {
-					}
-
-					int[] path = pathQueue.poll();
-					float time = calculateTimeUpTo(path, bestTime);
-					if (time < bestTime) {
-						for (int j = 0; j < path.length; j++) {
-							Main.bestPath[j] = path[j];
-						}
-						bestTime = time;
-					}
-				}
-
-				return true;
-			}
-
-			@Override
-			protected void done() {
-				// this method is called when the background
-				// thread finishes execution
-				ListModel model = Gui.algCompare.getModel();
-
-				String[] data = new String[model.getSize() + 1];
-				for (int i = 0; i < model.getSize(); i++) {
-					data[i] = (String) model.getElementAt(i);
-				}
-
-				long currentTime = System.currentTimeMillis();
-				NumberFormat numFormat = NumberFormat.getInstance();
-				numFormat.setMaximumFractionDigits(0);
-				numFormat.setMinimumIntegerDigits(2);
-				SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
-
-				double[] timeDistance = Map.calculateTimeDistance();
-				String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
-				String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
-
-				data[model.getSize()] = convertToTable("Async Brute Force", 28);
-				data[model.getSize()] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
-				data[model.getSize()] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
-				data[model.getSize()] += convertToTable(hour + ":" + min, 21);
-				data[model.getSize()] += convertToTable(timeFromat.format(currentTime - startTime), 28);
-				data[model.getSize()] += "|";
-
-				Gui.algCompare.setListData(data);
-			}
-		};
-
-		SwingWorker<Boolean, int[]> findPaths = new SwingWorker<Boolean, int[]>() {
 			@Override
 			protected Boolean doInBackground() throws Exception {
 				Main.bestPath = new int[Main.customers.length];
@@ -354,10 +239,11 @@ public class Algorithms {
 					path[i] = i;
 					Main.bestPath[i] = i;
 				}
-				pathQueue.add(path);
+				bestTime = calculateTimeUpTo(path, 999999999);
 
 				int[] swapWith = new int[Main.customers.length];
 				int i = 0;
+				long count = 0;
 				while (i < swapWith.length) {
 					if (swapWith[i] < i) {
 						if (i % 2 == 0) {
@@ -370,12 +256,19 @@ public class Algorithms {
 							path[swapWith[i]] = temp;
 						}
 
+						float time = calculateTimeUpTo(path, bestTime);
+						if (time < bestTime) {
+							for (int j = 0; j < path.length; j++) {
+								Main.bestPath[j] = path[j];
+							}
+							bestTime = time;
+						}
+
+						count++;
 						swapWith[i]++;
 						i = 0;
 
-						while (pathQueue.size() > 100000) {
-						}
-						pathQueue.add(path.clone());
+						publish(count);
 					} else {
 						swapWith[i] = 0;
 						i++;
@@ -385,14 +278,63 @@ public class Algorithms {
 			}
 
 			@Override
+			protected void process(List<Long> chunks) {
+				/*
+				 * sets the label to its new coordinates and size this is called in batches as
+				 * in it could execute like this
+				 * doInBackground,doInBackground,doInBackground,doInBackground, process,
+				 * process,doInBackground, process, process, process that is why it has to get
+				 * the next item in the list
+				 */
+				long count = chunks.get(chunks.size() - 1);
+
+				if (maxIterations == -1) {
+					// first run
+					maxIterations = Algorithms.calculateFactorial(Main.customers.length);
+				}
+
+				ControlPanel.progress.setValue(Math.round((count * 100) / maxIterations));
+			}
+
+			@Override
 			protected void done() {
-				Algorithms.algorithemRunning = false;
+				// this method is called when the background
+				// thread finishes execution
+				if (Gui.algCompare != null) {
+					ListModel model = Gui.algCompare.getModel();
+
+					String[] data = new String[model.getSize() + 1];
+					for (int i = 0; i < model.getSize(); i++) {
+						data[i] = (String) model.getElementAt(i);
+					}
+
+					long currentTime = System.currentTimeMillis();
+					NumberFormat numFormat = NumberFormat.getInstance();
+					numFormat.setMaximumFractionDigits(0);
+					numFormat.setMinimumIntegerDigits(2);
+					SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
+
+					double[] timeDistance = Map.calculateTimeDistance();
+					String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
+					String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
+
+					data[model.getSize()] = convertToTable("Async Brute Force", 28);
+					data[model.getSize()] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
+					data[model.getSize()] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
+					data[model.getSize()] += convertToTable(hour + ":" + min, 21);
+					data[model.getSize()] += convertToTable(timeFromat.format(currentTime - startTime), 28);
+					data[model.getSize()] += "|";
+
+					Gui.algCompare.setListData(data);
+				}
+
+				Gui.map.drawLines();
+				Gui.ctrlPanel.drawOutput();
 			}
 		};
 
 		// executes the swingworker on worker thread
 		findPaths.execute();
-		findTimes.execute();
 	}
 
 	private static float calculateTimeUpTo(int[] path, float max) {
@@ -429,6 +371,16 @@ public class Algorithms {
 			}
 		}
 		return lateMins;
+	}
+
+	public static int calculateFactorial(int in) {
+		if (in == 1 || in == 2) {
+			return in;
+		} else if (in == 3) {
+			return 6;
+		}
+
+		return in * calculateFactorial(in - 1);
 	}
 
 	private static void ReworkBestPath(boolean minimizeTime) {

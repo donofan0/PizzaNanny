@@ -5,6 +5,7 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -27,6 +28,7 @@ public class ControlPanel extends JPanel {
 	public static int repeatSteps = 10;
 	public static boolean droneRunning = false;
 	public static JButton startDrone;
+	public static JProgressBar progress;
 
 	boolean editMode = false;
 	boolean showAddress = false;
@@ -58,7 +60,7 @@ public class ControlPanel extends JPanel {
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
 		this.add(algorithmSelect, c);
 
-		JProgressBar progress = new JProgressBar();
+		progress = new JProgressBar(0, 100);
 		c.gridy++;
 		this.add(progress, c);
 
@@ -233,22 +235,26 @@ public class ControlPanel extends JPanel {
 					bestAlgorithem.setText("Best: " + algorithmSelect.getItemAt(best));
 					break;
 				}
-
-				drawOutput();
-				Gui.map.drawLines();
+				if (algSelected != 5) {
+					drawOutput();
+					Gui.map.drawLines();
+				}
 			}
 		});
 	}
 
 	public void drawOutput() {
-
 		if (Main.bestPath.length < 1) {
 			return;
 		}
 
+		NumberFormat numFormat = NumberFormat.getInstance();
+		numFormat.setMaximumFractionDigits(0);
+		numFormat.setMinimumIntegerDigits(2);
+
 		double[] timeDistance = Map.calculateTimeDistance();
-		punishment.setText("Angry Minutes: " + Math.round(timeDistance[0]));
-		distance.setText("Total distance: " + Math.round(timeDistance[1]) + "m");
+		punishment.setText("Angry Minutes: " + numFormat.format(timeDistance[0]));
+		distance.setText("Total distance: " + numFormat.format(timeDistance[1]) + "m");
 
 		String outputResult = "";
 		for (int i = 0; i < Main.bestPath.length - 1; i++) {

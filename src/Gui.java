@@ -21,9 +21,8 @@ import javax.swing.event.ListSelectionListener;
 public class Gui {
 	public static JTextArea inputTextArea;
 	public static Map map;
+	public static ControlPanel ctrlPanel;
 	public static JList<String> algCompare;
-
-	private ControlPanel ctrlPanel;
 
 	private final int ctrlWidth = 180;
 	private final int inputBoxHeight = 200;
