@@ -8,7 +8,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Collections;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -16,10 +15,13 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 public class Gui {
 	public static JTextArea inputTextArea;
 	public static Map map;
+	public static JList<String> algCompare;
 
 	private ControlPanel ctrlPanel;
 
@@ -53,10 +55,23 @@ public class Gui {
 					return;
 				}
 				int customerID = Map.getCustomerClicked(e.getPoint());
-				if (!Main.bestPath.contains(customerID)) {
-					Main.bestPath.add(customerID);
+				if (!Map.bestPathContains(customerID)) {
+					int[] newBestPath = new int[Main.bestPath.length + 1];
+					for (int i = 0; i < Main.bestPath.length; i++) {
+						newBestPath[i] = Main.bestPath[i];
+					}
+					newBestPath[Main.bestPath.length] = customerID;
+					Main.bestPath = newBestPath;
 				} else {
-					Main.bestPath.removeAll(Collections.singleton(customerID));
+					int[] newBestPath = new int[Main.bestPath.length - 1];
+					for (int i = 0; i < newBestPath.length; i++) {
+						if (i < customerID) {
+							newBestPath[i] = Main.bestPath[i];
+						} else {
+							newBestPath[i] = Main.bestPath[i - 1];
+						}
+					}
+					Main.bestPath = newBestPath;
 				}
 
 				ctrlPanel.drawOutput();
@@ -112,12 +127,21 @@ public class Gui {
 
 		String[] results = Algorithms.compareAlogrithemsWithResults();
 
-		JList<String> algList = new JList<String>(results); // data has type Object[]
-		algList.setLayoutOrientation(JList.VERTICAL);
-		algList.setVisibleRowCount(-1);
-		algList.setFont(new Font("monospaced", Font.BOLD, 16));
+		algCompare = new JList<String>(results); // data has type Object[]
+		algCompare.setLayoutOrientation(JList.VERTICAL);
+		algCompare.setVisibleRowCount(-1);
+		algCompare.setFont(new Font("monospaced", Font.BOLD, 16));
 
-		JScrollPane listScroller = new JScrollPane(algList);
+		algCompare.addListSelectionListener(new ListSelectionListener() {
+
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				System.out.println(e.getFirstIndex());
+			}
+
+		});
+
+		JScrollPane listScroller = new JScrollPane(algCompare);
 		listScroller.setPreferredSize(new Dimension(250, 80));
 		comparePanel.add(listScroller, BorderLayout.CENTER);
 

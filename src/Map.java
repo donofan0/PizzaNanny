@@ -12,7 +12,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -152,23 +151,23 @@ public class Map extends JLayeredPane {
 	}
 
 	public static float calculateTimeWaiting(Customer curCustomer, int pathIndex) {
-		if (Main.bestPath.isEmpty() || pathIndex < 0) {
+		if (Main.bestPath.length < 1 || pathIndex < 0) {
 			return -1;
 		}
 
-		double[] distances = CalculateTotalDistance(Main.bestPath.subList(0, pathIndex + 1));
+		double[] distances = CalculateTotalDistance(bestPathSubList(pathIndex + 1));
 		float time = (float) (distances[distances.length - 1] / driverSpeed) + curCustomer.waitTime;
 		return time;
 	}
 
 	// returns an array of where element 1 is the time late and element 2 is the
 	// total distance of the path
-	public static double[] calculateTimeDistance(ArrayList<Integer> path) {
+	public static double[] calculateTimeDistance(int[] path) {
 		double[] distances = CalculateTotalDistance(path);
 
 		double lateMins = 0;
-		for (int i = 0; i < path.size(); i++) {
-			Customer endCustomer = Main.customers.get(path.get(i));
+		for (int i = 0; i < path.length; i++) {
+			Customer endCustomer = Main.customers[path[i]];
 			double time = (distances[i] / driverSpeed) + endCustomer.waitTime;
 			if (time > 30) {
 				lateMins += time - 30;
@@ -183,7 +182,7 @@ public class Map extends JLayeredPane {
 		return calculateTimeDistance(Main.bestPath);
 	}
 
-	public static double calculateTime(ArrayList<Integer> path) {
+	public static double calculateTime(int[] path) {
 		return calculateTimeDistance(path)[0];
 	}
 
@@ -191,43 +190,15 @@ public class Map extends JLayeredPane {
 		return calculateTimeDistance(Main.bestPath)[0];
 	}
 
-	public static float calculateTimeUpTo(int[] path, float max) {
-		float lastDistance = 0;
-		float lateMins = 0;
+	public static double[] CalculateTotalDistance(int[] path) {
+		double[] distances = new double[path.length];
 		for (int i = 0; i < path.length; i++) {
-			Customer endCustomer = Main.customers.get(path[i]);
+			Customer endCustomer = Main.customers[path[i]];
 			Point start = Map.apachePizza;
 			Point end = endCustomer.location;
 			if (i != 0) {
-				start = Main.customers.get(path[i - 1]).location;
-				end = Main.customers.get(path[i]).location;
-			}
-
-			float distance = (float) start.distance(end);
-			distance += lastDistance;
-			lastDistance = distance;
-
-			double time = (distance / driverSpeed) + endCustomer.waitTime;
-			if (time > 30) {
-				lateMins += time - 30;
-			}
-
-			if (lateMins >= max) {
-				return lateMins;
-			}
-		}
-		return lateMins;
-	}
-
-	public static double[] CalculateTotalDistance(List<Integer> path) {
-		double[] distances = new double[path.size()];
-		for (int i = 0; i < path.size(); i++) {
-			Customer endCustomer = Main.customers.get(path.get(i));
-			Point start = Map.apachePizza;
-			Point end = endCustomer.location;
-			if (i != 0) {
-				start = Main.customers.get(path.get(i - 1)).location;
-				end = Main.customers.get(path.get(i)).location;
+				start = Main.customers[path[i - 1]].location;
+				end = Main.customers[path[i]].location;
 			}
 			double distance = start.distance(end);
 			if (i == 0) {
@@ -239,6 +210,93 @@ public class Map extends JLayeredPane {
 		return distances;
 	}
 
+	public static boolean bestPathContains(int in) {
+		for (int i = 0; i < Main.bestPath.length; i++) {
+			if (Main.bestPath[i] == in) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static int[] bestPathSubList(int size) {
+		int[] output = new int[size];
+		for (int i = 0; i < size; i++) {
+			output[i] = Main.bestPath[i];
+		}
+		return output;
+	}
+
+	public static int[] trimPath(int[] path) {
+		int size = 0;
+		for (int i = 0; i < path.length; i++) {
+			if (path[i] == -1) {
+				size = i - 1;
+				break;
+			}
+		}
+
+		int[] output = new int[size];
+		for (int i = 0; i < size; i++) {
+			output[i] = path[i];
+		}
+		return output;
+	}
+
+	public static int[] bestPathInsert(int index, int value) {
+		int[] newBestPath = new int[Main.customers.length];
+		for (int i = 0; i < newBestPath.length; i++) {
+			if (i < index) {
+				newBestPath[i] = Main.bestPath[i];
+			} else if (i == index) {
+				newBestPath[i] = value;
+			} else {
+				newBestPath[i] = Main.bestPath[i - 1];
+			}
+		}
+		return newBestPath;
+	}
+
+	public static int[] pathInsert(int[] path, int index, int value) {
+		int[] newBestPath = new int[path.length + 1];
+		for (int i = 0; i < newBestPath.length; i++) {
+			if (i < index) {
+				newBestPath[i] = path[i];
+			} else if (i == index) {
+				newBestPath[i] = value;
+			} else {
+				newBestPath[i] = path[i - 1];
+			}
+		}
+		return newBestPath;
+	}
+
+	public static void bestPathRemove(int value) {
+		int[] newBestPath = new int[Main.bestPath.length - 1];
+		boolean found = false;
+		for (int i = 0; i < newBestPath.length; i++) {
+			if (!found && Main.bestPath[i] == value) {
+				found = true;
+			}
+
+			if (found) {
+				newBestPath[i] = Main.bestPath[i + 1];
+			} else {
+				newBestPath[i] = Main.bestPath[i];
+			}
+		}
+		Main.bestPath = newBestPath;
+	}
+
+	public static int bestPathFindIndex(int id) {
+		for (int i = 0; i < Main.bestPath.length; i++) {
+			if (Main.bestPath[i] == id) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	public static Point scalePoint(Point point) {
 		return new Point((int) Math.round(point.x * scaleFactor), (int) Math.round(point.y * scaleFactor));
 	}
@@ -246,8 +304,8 @@ public class Map extends JLayeredPane {
 	public static int getCustomerClicked(Point point) {
 		int nearestCustomerIndex = 0;
 		double nearestDistance = 999999999;
-		for (int i = 0; i < Main.customers.size(); i++) {
-			Customer customer = Main.customers.get(i);
+		for (int i = 0; i < Main.customers.length; i++) {
+			Customer customer = Main.customers[i];
 			double distance = point.distance(scalePoint(customer.location));
 			if (distance < nearestDistance) {
 				nearestDistance = distance;
@@ -269,11 +327,11 @@ class Points extends JComponent {
 		// Draw a simple line using the Graphics2D draw() method.
 		Graphics2D g2 = (Graphics2D) g;
 
-		for (int i = 0; i < Main.customers.size(); i++) {
-			Customer customer = Main.customers.get(i);
+		for (int i = 0; i < Main.customers.length; i++) {
+			Customer customer = Main.customers[i];
 			Point point = Map.scalePoint(customer.location);
 			if (ControlPanel.showEmoji) {
-				float time = Map.calculateTimeWaiting(customer, Main.bestPath.indexOf(i));
+				float time = Map.calculateTimeWaiting(customer, Map.bestPathFindIndex(i));
 				if (time >= 0) {
 					g2.drawImage(Images.getEmoji(time), point.x - 8, point.y - 8, 16, 16, null);
 				} else {
@@ -304,16 +362,16 @@ class Lines extends JComponent {
 		// Draw a simple line using the Graphics2D draw() method.
 		Graphics2D g2 = (Graphics2D) g;
 
-		for (int i = 0; i < Main.bestPath.size(); i++) {
+		for (int i = 0; i < Main.bestPath.length; i++) {
 
 			Point start;
 			Point end;
 			if (i == 0) {
 				start = Map.scalePoint(Map.apachePizza);
-				end = Map.scalePoint(Main.customers.get(Main.bestPath.get(i)).location);
+				end = Map.scalePoint(Main.customers[Main.bestPath[i]].location);
 			} else {
-				start = Map.scalePoint(Main.customers.get(Main.bestPath.get(i - 1)).location);
-				end = Map.scalePoint(Main.customers.get(Main.bestPath.get(i)).location);
+				start = Map.scalePoint(Main.customers[Main.bestPath[i - 1]].location);
+				end = Map.scalePoint(Main.customers[Main.bestPath[i]].location);
 			}
 
 			g2.setColor(Color.BLUE);
@@ -333,7 +391,7 @@ class Drone extends JPanel {
 	Drone(Dimension size) {
 
 		Point start = Map.apachePizza;
-		Point end = Main.customers.get(Main.bestPath.get(0)).location;
+		Point end = Main.customers[Main.bestPath[0]].location;
 		drone = new JLabel(new ImageIcon(Images.drone2Pizza));
 		drone.setSize(60, 60);
 		this.add(drone);
@@ -411,19 +469,21 @@ class Drone extends JPanel {
 				// this method is called when the background
 				// thread finishes execution
 
-				if (curIndex + 1 < Main.bestPath.size() && ControlPanel.droneRunning) {
-					Point startNew = Main.customers.get(Main.bestPath.get(curIndex)).location;
+				if (curIndex + 1 < Main.bestPath.length && ControlPanel.droneRunning) {
+					Point startNew = Main.customers[Main.bestPath[curIndex]].location;
 					start.setFrame(startNew, getSize());
 					start.x = start.x * Map.scaleFactor - start.width / 2;
 					start.y = start.y * Map.scaleFactor - start.height / 2;
 
-					Point endNew = Main.customers.get(Main.bestPath.get(curIndex + 1)).location;
+					Point endNew = Main.customers[Main.bestPath[curIndex + 1]].location;
 					end.x = endNew.x * Map.scaleFactor - start.width / 2;
 					end.y = endNew.y * Map.scaleFactor - start.height / 2;
 
 					doAnimation(start, end, startNew.distance(endNew), curIndex + 1);
 				} else {
 					drone.setVisible(false);
+					ControlPanel.droneRunning = false;
+					ControlPanel.startDrone.setText("Start Drone");
 				}
 			}
 		};

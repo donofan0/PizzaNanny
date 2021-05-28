@@ -5,6 +5,7 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -22,9 +23,10 @@ public class ControlPanel extends JPanel {
 	 */
 	private static final long serialVersionUID = -8430168436937097596L;
 
-	static boolean showEmoji = false;
-	static boolean droneRunning = false;
-	static int repeatSteps = 10;
+	public static boolean showEmoji = false;
+	public static int repeatSteps = 10;
+	public static boolean droneRunning = false;
+	public static JButton startDrone;
 
 	boolean editMode = false;
 	boolean showAddress = false;
@@ -127,7 +129,7 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
-		JButton startDrone = new JButton("Start Drone");
+		startDrone = new JButton("Start Drone");
 		c.gridy++;
 		this.add(startDrone, c);
 		startDrone.addActionListener(new ActionListener() {
@@ -156,7 +158,7 @@ public class ControlPanel extends JPanel {
 					editMode = true;
 					editModeToggle.setText("Stop Edit Mode");
 
-					Main.bestPath.clear();
+					Main.bestPath = new int[0];
 					Gui.map.drawLines();
 					Gui.map.drawPoints();
 				}
@@ -168,7 +170,7 @@ public class ControlPanel extends JPanel {
 		this.add(openComparison, c);
 		openComparison.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (!Main.customers.isEmpty()) {
+				if (Main.customers.length > 0) {
 					Gui.startComparisionWindow();
 				}
 			}
@@ -183,7 +185,7 @@ public class ControlPanel extends JPanel {
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String[] input = Gui.inputTextArea.getText().trim().split("\\n");
-				Main.customers.clear();
+				ArrayList<Customer> tempCustomers = new ArrayList<Customer>();
 				for (int x = 0; x < input.length; x++) {
 					String[] currentLine = input[x].split(",");
 					if (currentLine.length < 5) {
@@ -192,8 +194,10 @@ public class ControlPanel extends JPanel {
 					Customer customer = new Customer(Integer.parseInt(currentLine[0].strip()), currentLine[1],
 							Integer.parseInt(currentLine[2].strip()), Double.parseDouble(currentLine[3].strip()),
 							Double.parseDouble(currentLine[4].strip()));
-					Main.customers.add(customer);
+					tempCustomers.add(customer);
 				}
+				Main.customers = new Customer[tempCustomers.size()];
+				Main.customers = tempCustomers.toArray(Main.customers);
 
 				repeatSteps = Integer.parseInt(repeatStepsValue.getValue().toString());
 
@@ -238,7 +242,7 @@ public class ControlPanel extends JPanel {
 
 	public void drawOutput() {
 
-		if (Main.bestPath.isEmpty()) {
+		if (Main.bestPath.length < 1) {
 			return;
 		}
 
@@ -247,17 +251,17 @@ public class ControlPanel extends JPanel {
 		distance.setText("Total distance: " + Math.round(timeDistance[1]) + "m");
 
 		String outputResult = "";
-		for (int i = 0; i < Main.bestPath.size() - 1; i++) {
-			outputResult += Main.customers.get(Main.bestPath.get(i)).id;
+		for (int i = 0; i < Main.bestPath.length - 1; i++) {
+			outputResult += Main.customers[Main.bestPath[i]].id;
 			if (showAddress) {
-				outputResult += "(" + Main.customers.get(Main.bestPath.get(i)).address + ")";
+				outputResult += "(" + Main.customers[Main.bestPath[i]].address + ")";
 			}
 			outputResult += ",";
 		}
 
-		outputResult += Main.customers.get(Main.bestPath.get(Main.bestPath.size() - 1)).id;
+		outputResult += Main.customers[Main.bestPath[Main.bestPath.length - 1]].id;
 		if (showAddress) {
-			outputResult += "(" + Main.customers.get(Main.bestPath.get(Main.bestPath.size() - 1)).address + ")";
+			outputResult += "(" + Main.customers[Main.bestPath[Main.bestPath.length - 1]].address + ")";
 		}
 
 		outputTextArea.setText(outputResult);

@@ -1,9 +1,7 @@
-import java.util.ArrayList;
-
 public class Main {
 
-	public static ArrayList<Customer> customers = new ArrayList<Customer>();
-	public static ArrayList<Integer> bestPath = new ArrayList<Integer>();
+	public static Customer[] customers = new Customer[0];
+	public static int[] bestPath = new int[0];
 
 	public static void main(String[] args) {
 		new Gui();
