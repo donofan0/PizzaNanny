@@ -66,6 +66,7 @@ public class ControlPanel extends JPanel {
 
 		algorithmSelect = new JComboBox<String>(Algorithms.algorithms);
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
+		algorithmSelect.setSelectedIndex(Algorithms.algorithms.length - 1);
 		this.add(algorithmSelect, c);
 
 		progress = new JProgressBar(0, 100);
