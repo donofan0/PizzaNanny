@@ -2,7 +2,6 @@ package pointsMaker;
 
 import java.awt.geom.Point2D;
 import java.util.Random;
-import java.util.Scanner;
 
 public class MainGenerator {
 	final static Point2D.Double topLeftMap = new Point2D.Double(-6.714, 53.4105);
@@ -11,23 +10,21 @@ public class MainGenerator {
 
 	public static void main(String[] args) {
 
-		try (Scanner scan = new Scanner(System.in)) {
-			Random rand = new Random();
+		Random rand = new Random();
 
-			int maxPoints = 100;
-			int numOfClusters = 5;
-			double deviationX = 0.001;
-			double deviationY = 0.001;
-			for (int i = 0; i < numOfClusters; i++) {
-				double meanX = (bottomRigthMap.x - topLeftMap.x) * rand.nextDouble() + topLeftMap.x;
-				double meanY = (bottomRigthMap.y - topLeftMap.y) * rand.nextDouble() + topLeftMap.y;
-				for (int j = 0; j < maxPoints / numOfClusters; j++) {
-					double x = (rand.nextGaussian() * deviationX + meanX);
-					double y = (rand.nextGaussian() * deviationY + meanY);
-					int time = rand.nextInt(31);
-					System.out.println((j + i * (maxPoints / numOfClusters) + 1) + ",This is a test address ," + time
-							+ "," + y + "," + x);
-				}
+		int maxPoints = 100;
+		int numOfClusters = 5;
+		double deviationX = 0.001;
+		double deviationY = 0.001;
+		for (int i = 0; i < numOfClusters; i++) {
+			double meanX = (bottomRigthMap.x - topLeftMap.x) * rand.nextDouble() + topLeftMap.x;
+			double meanY = (bottomRigthMap.y - topLeftMap.y) * rand.nextDouble() + topLeftMap.y;
+			for (int j = 0; j < maxPoints / numOfClusters; j++) {
+				double x = (rand.nextGaussian() * deviationX + meanX);
+				double y = (rand.nextGaussian() * deviationY + meanY);
+				int time = rand.nextInt(31);
+				System.out.println((j + i * (maxPoints / numOfClusters) + 1) + ",This is a test address ," + time + ","
+						+ y + "," + x);
 			}
 		}
 	}

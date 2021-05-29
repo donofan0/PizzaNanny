@@ -37,9 +37,12 @@ public class Gui {
 	private static final Dimension windowSize = new Dimension(1200, 1300);
 	private static JFrame generatorFrame;
 	private static JFrame compareFrame;
+	private static JSpinner numOfCustomersValue;
+	private static JSpinner numOfClustersValue;
+	private static JSpinner standDeviationValue;
 
 	public Gui() {
-		JFrame frame = new JFrame("Draw Graph");
+		final JFrame frame = new JFrame("Draw Graph");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.pack();
 		frame.setSize(windowSize);
@@ -51,7 +54,7 @@ public class Gui {
 		ctrlPanel = new ControlPanel(new Rectangle(frameSize.width - ctrlWidth, 0, ctrlWidth, frameSize.height));
 
 		inputTextArea = new JTextArea();
-		JScrollPane inputDeliverys = new JScrollPane(inputTextArea);
+		final JScrollPane inputDeliverys = new JScrollPane(inputTextArea);
 		inputDeliverys.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		inputDeliverys.setBounds(
 				new Rectangle(0, frameSize.height - inputBoxHeight, frameSize.width - ctrlWidth, inputBoxHeight));
@@ -141,11 +144,12 @@ public class Gui {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				int selectedAlg = algCompare.getSelectedIndex() - 1;
-				if (selectedAlg < 0 || selectedAlg > Algorithms.algorithms.length - 1) {
+				if (selectedAlg < 0 || selectedAlg > Algorithms.algorithms.length - 2) {
 					return;
 				}
-
-				System.out.println(selectedAlg);
+				if (Main.customers.length >= 13 && selectedAlg == Algorithms.algorithms.length - 2) {
+					return;
+				}
 
 				ctrlPanel.algorithmSelect.setSelectedIndex(selectedAlg);
 				ctrlPanel.submitButtonAction();
@@ -203,7 +207,7 @@ public class Gui {
 		comparePanel.add(Label, c);
 
 		spinModel = new SpinnerNumberModel(100, 0, 100, 1);
-		JSpinner numOfCustomersValue = new JSpinner(spinModel);
+		numOfCustomersValue = new JSpinner(spinModel);
 		c.gridx = 1;
 		comparePanel.add(numOfCustomersValue, c);
 
@@ -213,7 +217,7 @@ public class Gui {
 		comparePanel.add(Label, c);
 
 		spinModel = new SpinnerNumberModel(5, 0, 99, 1);
-		JSpinner numOfClustersValue = new JSpinner(spinModel);
+		numOfClustersValue = new JSpinner(spinModel);
 		c.gridx = 1;
 		comparePanel.add(numOfClustersValue, c);
 
@@ -223,7 +227,7 @@ public class Gui {
 		comparePanel.add(Label, c);
 
 		spinModel = new SpinnerNumberModel(1, 0, 100, 0.5);
-		JSpinner standDeviationValue = new JSpinner(spinModel);
+		standDeviationValue = new JSpinner(spinModel);
 		c.gridx = 1;
 		comparePanel.add(standDeviationValue, c);
 
@@ -242,9 +246,9 @@ public class Gui {
 		comparePanel.add(generate, c);
 		generate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				int maxPoints = (int) numOfCustomersValue.getValue();
-				int numOfClusters = (int) numOfClustersValue.getValue();
-				double deviation = (double) standDeviationValue.getValue() / 1000;
+				int maxPoints = (Integer) numOfCustomersValue.getValue();
+				int numOfClusters = (Integer) numOfClustersValue.getValue();
+				double deviation = (Double) standDeviationValue.getValue() / 1000;
 
 				inputTextArea.setText("");
 

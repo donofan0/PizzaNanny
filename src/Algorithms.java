@@ -9,7 +9,8 @@ import javax.swing.SwingWorker;
 
 public class Algorithms {
 	public final static String[] algorithms = { "Nearest Neighbor(Distance)", "Nearest Neighbor(Time)",
-			"Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "Depth First Search", "All of the Above" };
+			"Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "Group Aproximition", "Depth First Search",
+			"All of the Above" };
 	public static boolean algorithemRunning = false;
 
 	public static String[] compareAlogrithemsWithResults() {
@@ -33,6 +34,9 @@ public class Algorithms {
 				break;
 			case 4:
 				calculateLargestTimeFirst();
+				break;
+			case 5:
+				calculateGroupAproximition();
 				break;
 			}
 
@@ -81,6 +85,9 @@ public class Algorithms {
 				break;
 			case 4:
 				calculateLargestTimeFirst();
+				break;
+			case 5:
+				calculateGroupAproximition();
 				break;
 			}
 
@@ -231,8 +238,162 @@ public class Algorithms {
 		ReworkBestPath(true);
 	}
 
+	public static void calculateGroupAproximition() {
+		Main.bestPath = new int[Main.customers.length];
+		Arrays.fill(Main.bestPath, -1);
+
+		int groupSize = 3;
+
+		int numOfGroups = (int) Math.ceil((float) Main.customers.length / (float) groupSize);
+		int[][] groups = new int[numOfGroups][groupSize];
+
+		for (int i = 0; i < numOfGroups; i++) {
+			Arrays.fill(groups[i], -1);
+		}
+
+		for (int i = 0; i < numOfGroups; i++) {
+			int curCustomerIndex = 0;
+			while (groupsContains(groups, curCustomerIndex)) {
+				curCustomerIndex++;
+			}
+			Point curCustomer = Main.customers[curCustomerIndex].location;
+
+			int[] group = new int[groupSize];
+			Arrays.fill(group, -1);
+			for (int a = 0; a < groupSize; a++) {
+				int closestCustomer = -1;
+				double shortestDist = 999999999;
+				for (int j = 0; j < Main.customers.length; j++) {
+					if (closestCustomer == j) {
+						continue;
+					}
+					Customer closestCustomerPossibly = Main.customers[j];
+					double distance = curCustomer.distance(closestCustomerPossibly.location);
+					if (distance < shortestDist && !Map.pathContains(group, j) && !groupsContains(groups, j)) {
+						shortestDist = distance;
+						closestCustomer = j;
+					}
+				}
+				group[a] = closestCustomer;
+			}
+			groups[i] = Arrays.copyOf(calculateDepthFirstSearch(Map.trimPath(group)), Map.trimPath(group).length);
+		}
+
+		double bestTime = 999999999;
+		int[] localBestPath = new int[Main.customers.length];
+		int[][] groupPermitations = generateAllPermitations(numOfGroups);
+		for (int j = 0; j < groupPermitations.length; j++) {
+			int[] permitation = groupPermitations[j];
+			int[] path = new int[Main.customers.length];
+			for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
+				int group = permitation[groupIndex];
+				for (int point = 0; point < groups[group].length; point++) {
+					if (groupIndex * groupSize + point > Main.customers.length - 1) {
+						break;
+					}
+					path[groupIndex * groupSize + point] = groups[group][point];
+				}
+			}
+			double time = Map.calculateTime(path);
+			if (time < bestTime) {
+				bestTime = time;
+				localBestPath = Arrays.copyOf(path, path.length);
+			}
+		}
+
+		Main.bestPath = localBestPath;
+
+		ReworkBestPath(true);
+	}
+
+	private static boolean groupsContains(int[][] groups, int value) {
+		for (int i = 0; i < groups.length; i++) {
+			if (Map.pathContains(groups[i], value)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static int[][] generateAllPermitations(int size) {
+		int[][] output = new int[calculateFactorial(size)][size];
+
+		int[] permitation = new int[size];
+		for (int i = 0; i < permitation.length; i++) {
+			permitation[i] = i;
+		}
+		output[0] = Arrays.copyOf(permitation, permitation.length);
+
+		int[] swapWith = new int[permitation.length];
+		int count = 0;
+		int i = 0;
+		while (i < swapWith.length) {
+			if (swapWith[i] < i) {
+				if (i % 2 == 0) {
+					int temp = permitation[i];
+					permitation[i] = permitation[0];
+					permitation[0] = temp;
+				} else {
+					int temp = permitation[i];
+					permitation[i] = permitation[swapWith[i]];
+					permitation[swapWith[i]] = temp;
+				}
+
+				count++;
+				swapWith[i]++;
+				i = 0;
+
+				output[count] = Arrays.copyOf(permitation, permitation.length);
+			} else {
+				swapWith[i] = 0;
+				i++;
+			}
+		}
+		return output;
+	}
+
+	private static int[] calculateDepthFirstSearch(int[] path) {
+		float bestTime = calculateTimeUpTo(path, 999999999);
+		int[] curBestPath = new int[path.length];
+		for (int j = 0; j < curBestPath.length; j++) {
+			curBestPath[j] = path[j];
+		}
+
+		int[] swapWith = new int[path.length];
+		int i = 0;
+		while (i < swapWith.length) {
+			if (swapWith[i] < i) {
+				if (i % 2 == 0) {
+					int temp = path[i];
+					path[i] = path[0];
+					path[0] = temp;
+				} else {
+					int temp = path[i];
+					path[i] = path[swapWith[i]];
+					path[swapWith[i]] = temp;
+				}
+
+				float time = calculateTimeUpTo(path, bestTime);
+				if (time < bestTime) {
+					for (int j = 0; j < curBestPath.length; j++) {
+						curBestPath[j] = path[j];
+					}
+					bestTime = time;
+				}
+
+				swapWith[i]++;
+				i = 0;
+			} else {
+				swapWith[i] = 0;
+				i++;
+			}
+		}
+		return curBestPath;
+	}
+
 	// Guaranteed perfect answer
 	public static void calculateDepthFirstSearch() {
+		ControlPanel.AlgorithmRunning = true;
 		SwingWorker<Boolean, Long> findPaths = new SwingWorker<Boolean, Long>() {
 			private float bestTime = 999999999;
 			private long startTime = System.currentTimeMillis();
@@ -252,7 +413,7 @@ public class Algorithms {
 				int[] swapWith = new int[Main.customers.length];
 				int i = 0;
 				long count = 0;
-				while (i < swapWith.length) {
+				while (i < swapWith.length && ControlPanel.AlgorithmRunning) {
 					if (swapWith[i] < i) {
 						if (i % 2 == 0) {
 							int temp = path[i];
@@ -299,6 +460,7 @@ public class Algorithms {
 				if (maxIterations <= 0) {
 					// first run
 					maxIterations = Algorithms.calculateFactorial(Main.customers.length);
+					return;
 				}
 
 				ControlPanel.progress.setValue(Math.round((count * 100) / maxIterations));
@@ -311,6 +473,7 @@ public class Algorithms {
 				Gui.map.drawLines();
 				Gui.ctrlPanel.drawOutput();
 				ControlPanel.progress.setValue(100);
+				ControlPanel.AlgorithmRunning = false;
 
 				if (Gui.algCompare != null) {
 					ListModel model = Gui.algCompare.getModel();

@@ -231,6 +231,15 @@ public class Map extends JLayeredPane {
 		return false;
 	}
 
+	public static boolean pathContains(int[] path, int in) {
+		for (int i = 0; i < path.length; i++) {
+			if (path[i] == in) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static int[] bestPathSubList(int size) {
 		int[] output = new int[size];
 		for (int i = 0; i < size; i++) {
@@ -240,10 +249,10 @@ public class Map extends JLayeredPane {
 	}
 
 	public static int[] trimPath(int[] path) {
-		int size = 0;
+		int size = path.length;
 		for (int i = 0; i < path.length; i++) {
 			if (path[i] == -1) {
-				size = i - 1;
+				size = i;
 				break;
 			}
 		}
@@ -412,7 +421,8 @@ class Drone extends JPanel {
 				new Point2D.Double(end.x * Map.scaleFactor - 30, end.y * Map.scaleFactor - 30), start.distance(end), 0);
 	}
 
-	private void doAnimation(Rectangle2D.Double start, Point2D.Double end, double distance, int curIndex) {
+	private void doAnimation(final Rectangle2D.Double start, final Point2D.Double end, final double distance,
+			final int curIndex) {
 		drone.setBounds(start.getBounds());
 		SwingWorker<Boolean, Rectangle2D.Double> animate = new SwingWorker<Boolean, Rectangle2D.Double>() {
 			private double xDelta = (end.x - start.x) / ((distance * 60 * 1000) / (Map.driverSpeed * droneSpeedScale));

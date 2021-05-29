@@ -54,17 +54,23 @@ public class ConvertHexToDecimal {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		try (FileOutputStream fos = new FileOutputStream("uno0output.txt")) {
-			fos.write(fileContent);
-			// fos.close(); There is no more need for this line since you had created the
-			// instance of "fos" inside the try. And this will automatically close the
-			// OutputStream
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream("uno0output.txt");
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		try {
+			fos.write(fileContent);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// fos.close(); There is no more need for this line since you had created the
+		// instance of "fos" inside the try. And this will automatically close the
+		// OutputStream
 
 		return fileContent;
 	}

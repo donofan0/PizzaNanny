@@ -27,6 +27,7 @@ public class ControlPanel extends JPanel {
 	public static boolean showEmoji = false;
 	public static int repeatSteps = 10;
 	public static boolean droneRunning = false;
+	public static boolean AlgorithmRunning = false;
 	public static JButton startDrone;
 	public static JProgressBar progress;
 
@@ -40,6 +41,8 @@ public class ControlPanel extends JPanel {
 	private JSpinner repeatStepsValue;
 	private JButton editModeToggle;
 	private JLabel bestAlgorithem;
+	private JButton emojiToggle;
+	private JButton addressToggle;
 
 	public ControlPanel(Rectangle frame) {
 		this.setBounds(frame);
@@ -100,7 +103,7 @@ public class ControlPanel extends JPanel {
 		c.gridy++;
 		this.add(outputDeliverys, c);
 
-		JButton addressToggle = new JButton("Show Address");
+		addressToggle = new JButton("Show Address");
 		c.weighty = 1;
 		c.gridy++;
 		this.add(addressToggle, c);
@@ -118,7 +121,7 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
-		JButton emojiToggle = new JButton("Show Emoji");
+		emojiToggle = new JButton("Show Emoji");
 		c.gridy++;
 		this.add(emojiToggle, c);
 		emojiToggle.addActionListener(new ActionListener() {
@@ -225,6 +228,7 @@ public class ControlPanel extends JPanel {
 		startDrone.setText("Start Drone");
 		editMode = false;
 		editModeToggle.setText("Start Edit Mode");
+		ControlPanel.AlgorithmRunning = false;
 
 		Gui.map.drawPoints();
 
@@ -246,6 +250,9 @@ public class ControlPanel extends JPanel {
 			Algorithms.calculateLargestTimeFirst();
 			break;
 		case 5:
+			Algorithms.calculateGroupAproximition();
+			break;
+		case 6:
 			Algorithms.calculateDepthFirstSearch();
 			break;
 		default:
@@ -253,7 +260,7 @@ public class ControlPanel extends JPanel {
 			bestAlgorithem.setText("Best: " + algorithmSelect.getItemAt(best));
 			break;
 		}
-		if (algSelected != 5) {
+		if (algSelected != 6) {
 			drawOutput();
 			Gui.map.drawLines();
 		}
