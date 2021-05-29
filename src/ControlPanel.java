@@ -32,10 +32,14 @@ public class ControlPanel extends JPanel {
 
 	boolean editMode = false;
 	boolean showAddress = false;
+	JComboBox<String> algorithmSelect;
 
 	private JTextArea outputTextArea;
 	private JLabel punishment;
 	private JLabel distance;
+	private JSpinner repeatStepsValue;
+	private JButton editModeToggle;
+	private JLabel bestAlgorithem;
 
 	public ControlPanel(Rectangle frame) {
 		this.setBounds(frame);
@@ -56,7 +60,7 @@ public class ControlPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 0;
 
-		JComboBox<String> algorithmSelect = new JComboBox<String>(Algorithms.algorithms);
+		algorithmSelect = new JComboBox<String>(Algorithms.algorithms);
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
 		this.add(algorithmSelect, c);
 
@@ -69,8 +73,8 @@ public class ControlPanel extends JPanel {
 		c.gridy++;
 		this.add(repeatStepsLabel, c);
 
-		SpinnerNumberModel spinModel = new SpinnerNumberModel(10, 0, 99, 1);
-		JSpinner repeatStepsValue = new JSpinner(spinModel);
+		SpinnerNumberModel spinModel = new SpinnerNumberModel(10, 0, 10, 1);
+		repeatStepsValue = new JSpinner(spinModel);
 		c.gridx = 1;
 		this.add(repeatStepsValue, c);
 
@@ -84,7 +88,7 @@ public class ControlPanel extends JPanel {
 		c.gridy++;
 		this.add(distance, c);
 
-		JLabel bestAlgorithem = new JLabel("");
+		bestAlgorithem = new JLabel("");
 		c.gridy++;
 		this.add(bestAlgorithem, c);
 
@@ -148,7 +152,7 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
-		JButton editModeToggle = new JButton("Start Edit Mode");
+		editModeToggle = new JButton("Start Edit Mode");
 		c.gridy++;
 		this.add(editModeToggle, c);
 		editModeToggle.addActionListener(new ActionListener() {
@@ -167,18 +171,26 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
+		JButton openRandomPoints = new JButton("Generate Points");
+		c.gridy++;
+		this.add(openRandomPoints, c);
+		openRandomPoints.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Gui.startPointsGenerator();
+			}
+		});
+
 		JButton openComparison = new JButton("Open Comparison");
 		c.gridy++;
 		this.add(openComparison, c);
 		openComparison.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				submitButtonAction();
 				if (Main.customers.length > 0) {
 					Gui.startComparisionWindow();
 				}
 			}
 		});
-
-		// TODO: generate random points
 
 		JButton submit = new JButton("Submit");
 		submit.setPreferredSize(new Dimension(100, 20));
@@ -186,61 +198,65 @@ public class ControlPanel extends JPanel {
 		this.add(submit, c);
 		submit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String[] input = Gui.inputTextArea.getText().trim().split("\\n");
-				ArrayList<Customer> tempCustomers = new ArrayList<Customer>();
-				for (int x = 0; x < input.length; x++) {
-					String[] currentLine = input[x].split(",");
-					if (currentLine.length < 5) {
-						continue;
-					}
-					Customer customer = new Customer(Integer.parseInt(currentLine[0].strip()), currentLine[1],
-							Integer.parseInt(currentLine[2].strip()), Double.parseDouble(currentLine[3].strip()),
-							Double.parseDouble(currentLine[4].strip()));
-					tempCustomers.add(customer);
-				}
-				Main.customers = new Customer[tempCustomers.size()];
-				Main.customers = tempCustomers.toArray(Main.customers);
-
-				repeatSteps = Integer.parseInt(repeatStepsValue.getValue().toString());
-
-				droneRunning = false;
-				startDrone.setText("Start Drone");
-				editMode = false;
-				editModeToggle.setText("Start Edit Mode");
-
-				Gui.map.drawPoints();
-
-				int algSelected = algorithmSelect.getSelectedIndex();
-				switch (algSelected) {
-				case 0:
-					Algorithms.calculateNearestNeighbor(false);
-					break;
-				case 1:
-					Algorithms.calculateNearestNeighbor(true);
-					break;
-				case 2:
-					Algorithms.calculateConvexHull(false);
-					break;
-				case 3:
-					Algorithms.calculateConvexHull(true);
-					break;
-				case 4:
-					Algorithms.calculateLargestTimeFirst();
-					break;
-				case 5:
-					Algorithms.calculateDepthFirstSearch();
-					break;
-				default:
-					int best = Algorithms.compareAlogrithems();
-					bestAlgorithem.setText("Best: " + algorithmSelect.getItemAt(best));
-					break;
-				}
-				if (algSelected != 5) {
-					drawOutput();
-					Gui.map.drawLines();
-				}
+				submitButtonAction();
 			}
 		});
+	}
+
+	public void submitButtonAction() {
+		String[] input = Gui.inputTextArea.getText().trim().split("\\n");
+		ArrayList<Customer> tempCustomers = new ArrayList<Customer>();
+		for (int x = 0; x < input.length; x++) {
+			String[] currentLine = input[x].split(",");
+			if (currentLine.length < 5) {
+				continue;
+			}
+			Customer customer = new Customer(Integer.parseInt(currentLine[0].strip()), currentLine[1],
+					Integer.parseInt(currentLine[2].strip()), Double.parseDouble(currentLine[3].strip()),
+					Double.parseDouble(currentLine[4].strip()));
+			tempCustomers.add(customer);
+		}
+		Main.customers = new Customer[tempCustomers.size()];
+		Main.customers = tempCustomers.toArray(Main.customers);
+
+		repeatSteps = Integer.parseInt(repeatStepsValue.getValue().toString());
+
+		droneRunning = false;
+		startDrone.setText("Start Drone");
+		editMode = false;
+		editModeToggle.setText("Start Edit Mode");
+
+		Gui.map.drawPoints();
+
+		int algSelected = algorithmSelect.getSelectedIndex();
+		switch (algSelected) {
+		case 0:
+			Algorithms.calculateNearestNeighbor(false);
+			break;
+		case 1:
+			Algorithms.calculateNearestNeighbor(true);
+			break;
+		case 2:
+			Algorithms.calculateConvexHull(false);
+			break;
+		case 3:
+			Algorithms.calculateConvexHull(true);
+			break;
+		case 4:
+			Algorithms.calculateLargestTimeFirst();
+			break;
+		case 5:
+			Algorithms.calculateDepthFirstSearch();
+			break;
+		default:
+			int best = Algorithms.compareAlogrithems();
+			bestAlgorithem.setText("Best: " + algorithmSelect.getItemAt(best));
+			break;
+		}
+		if (algSelected != 5) {
+			drawOutput();
+			Gui.map.drawLines();
+		}
 	}
 
 	public void drawOutput() {

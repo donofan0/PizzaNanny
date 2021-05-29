@@ -37,7 +37,8 @@ public class Map extends JLayeredPane {
 	final static double earthRadius = 6371.0070072;
 
 	final static Point2D.Double topLeftMap = new Point2D.Double(-6.714, 53.4105);
-	final static Point bottomRigthMap = new Point(longitudeToX(-6.4546), latitudeToY(53.2857));
+	final static Point2D.Double bottomRigthMapGPS = new Point2D.Double(-6.4546, 53.2857);
+	final static Point bottomRigthMap = new Point(longitudeToX(bottomRigthMapGPS.x), latitudeToY(bottomRigthMapGPS.y));
 	final static Point apachePizza = new Point(longitudeToX(-6.59296), latitudeToY(53.381176));
 	final static int driverSpeed = 1000; // meters per minute
 
@@ -67,6 +68,10 @@ public class Map extends JLayeredPane {
 	}
 
 	public void startDrone() {
+		if (Main.customers.length < 1) {
+			return;
+		}
+
 		drone = new Drone(mapSize.getSize());
 		drone.setBounds(mapSize);
 		drone.setOpaque(false);
@@ -83,8 +88,7 @@ public class Map extends JLayeredPane {
 		BufferedImage myPicture = null;
 		JLabel picLabel;
 		try {
-			// TODO: fix directory
-			myPicture = ImageIO.read(new File("./src/map.png"));
+			myPicture = ImageIO.read(new File("map.png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -143,11 +147,19 @@ public class Map extends JLayeredPane {
 	}
 
 	public static int latitudeToY(double latitude) {
-		return (int) Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, latitude, topLeftMap.x));
+		if (latitude > topLeftMap.y) {
+			return (int) -Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, latitude, topLeftMap.x));
+		} else {
+			return (int) Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, latitude, topLeftMap.x));
+		}
 	}
 
 	public static int longitudeToX(double longitude) {
-		return (int) Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, topLeftMap.y, longitude));
+		if (longitude < topLeftMap.x) {
+			return (int) -Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, topLeftMap.y, longitude));
+		} else {
+			return (int) Math.round(calcGPSDistance(topLeftMap.y, topLeftMap.x, topLeftMap.y, longitude));
+		}
 	}
 
 	public static float calculateTimeWaiting(Customer curCustomer, int pathIndex) {

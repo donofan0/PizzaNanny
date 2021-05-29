@@ -54,7 +54,9 @@ public class Algorithms {
 			output[i + 1] += "|";
 		}
 
-		calculateDepthFirstSearch();
+		if (Main.customers.length < 13) {
+			calculateDepthFirstSearch();
+		}
 
 		return output;
 	}
@@ -134,17 +136,17 @@ public class Algorithms {
 		Main.bestPath = new int[Main.customers.length];
 		Arrays.fill(Main.bestPath, -1);
 
-		// go to the lowest point
-		long largestY = -1;
-		int largestYIndex = -1;
+		// go to the heighest point
+		long lowestY = 999999999;
+		int lowestYIndex = -1;
 		for (int i = 0; i < Main.customers.length; i++) {
 			Point curPoint = Main.customers[i].location;
-			if (curPoint.y > largestY) {
-				largestY = curPoint.y;
-				largestYIndex = i;
+			if (curPoint.y < lowestY) {
+				lowestY = curPoint.y;
+				lowestYIndex = i;
 			}
 		}
-		Main.bestPath[0] = largestYIndex;
+		Main.bestPath[0] = lowestYIndex;
 
 		// makes a loop round the outside of the customer
 		for (int mode = 1; mode <= 4; mode++) {
@@ -162,19 +164,19 @@ public class Algorithms {
 		// connect the center point
 		for (int n = 0; n < Main.customers.length; n++) {
 			// finds the lowest point which is not connected
-			largestY = -1;
-			largestYIndex = -1;
+			lowestY = 999999999;
+			lowestYIndex = -1;
 			for (int i = 0; i < Main.customers.length; i++) {
 				if (Map.bestPathContains(i)) {
 					continue;
 				}
 				Point curPoint = Main.customers[i].location;
-				if (curPoint.y > largestY) {
-					largestY = curPoint.y;
-					largestYIndex = i;
+				if (curPoint.y < lowestY) {
+					lowestY = curPoint.y;
+					lowestYIndex = i;
 				}
 			}
-			if (largestYIndex == -1) {
+			if (lowestYIndex == -1) {
 				break;
 			}
 
@@ -185,7 +187,7 @@ public class Algorithms {
 			int[] currentPath = Map.trimPath(Main.bestPath);
 			for (int i = 0; i < currentPath.length; i++) {
 				// calulates the cost if the point was inserted here
-				double[] timeDistance = Map.calculateTimeDistance(Map.pathInsert(currentPath, i, largestYIndex));
+				double[] timeDistance = Map.calculateTimeDistance(Map.pathInsert(currentPath, i, lowestYIndex));
 				if (timeDistance[0] < bestTime && minimizeTime) {
 					bestTime = timeDistance[0];
 					bestInsert = i;
@@ -197,7 +199,13 @@ public class Algorithms {
 					bestInsert = i;
 				}
 			}
-			Main.bestPath = Map.bestPathInsert(bestInsert, largestYIndex);
+			if (bestInsert == -1) {
+				// error occurred fallback to nearest neighbor
+				calculateNearestNeighbor(minimizeTime);
+				System.out.println("!!Convex Algorithem Error, Calling Nearest Neighbor fallback");
+				return;
+			}
+			Main.bestPath = Map.bestPathInsert(bestInsert, lowestYIndex);
 		}
 
 		ReworkBestPath(minimizeTime);
@@ -288,7 +296,7 @@ public class Algorithms {
 				 */
 				long count = chunks.get(chunks.size() - 1);
 
-				if (maxIterations == -1) {
+				if (maxIterations <= 0) {
 					// first run
 					maxIterations = Algorithms.calculateFactorial(Main.customers.length);
 				}
@@ -300,36 +308,39 @@ public class Algorithms {
 			protected void done() {
 				// this method is called when the background
 				// thread finishes execution
+				Gui.map.drawLines();
+				Gui.ctrlPanel.drawOutput();
+				ControlPanel.progress.setValue(100);
+
 				if (Gui.algCompare != null) {
 					ListModel model = Gui.algCompare.getModel();
 
-					String[] data = new String[model.getSize() + 1];
-					for (int i = 0; i < model.getSize(); i++) {
-						data[i] = (String) model.getElementAt(i);
+					if (model.getSize() <= algorithms.length) {
+						String[] data = new String[model.getSize() + 1];
+						for (int i = 0; i < model.getSize(); i++) {
+							data[i] = (String) model.getElementAt(i);
+						}
+
+						long currentTime = System.currentTimeMillis();
+						NumberFormat numFormat = NumberFormat.getInstance();
+						numFormat.setMaximumFractionDigits(0);
+						numFormat.setMinimumIntegerDigits(2);
+						SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
+
+						double[] timeDistance = Map.calculateTimeDistance();
+						String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
+						String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
+
+						data[model.getSize() - 1] = convertToTable("Async Brute Force", 28);
+						data[model.getSize() - 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
+						data[model.getSize() - 1] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
+						data[model.getSize() - 1] += convertToTable(hour + ":" + min, 21);
+						data[model.getSize() - 1] += convertToTable(timeFromat.format(currentTime - startTime), 28);
+						data[model.getSize() - 1] += "|";
+
+						Gui.algCompare.setListData(data);
 					}
-
-					long currentTime = System.currentTimeMillis();
-					NumberFormat numFormat = NumberFormat.getInstance();
-					numFormat.setMaximumFractionDigits(0);
-					numFormat.setMinimumIntegerDigits(2);
-					SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
-
-					double[] timeDistance = Map.calculateTimeDistance();
-					String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
-					String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
-
-					data[model.getSize()] = convertToTable("Async Brute Force", 28);
-					data[model.getSize()] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
-					data[model.getSize()] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
-					data[model.getSize()] += convertToTable(hour + ":" + min, 21);
-					data[model.getSize()] += convertToTable(timeFromat.format(currentTime - startTime), 28);
-					data[model.getSize()] += "|";
-
-					Gui.algCompare.setListData(data);
 				}
-
-				Gui.map.drawLines();
-				Gui.ctrlPanel.drawOutput();
 			}
 		};
 
@@ -430,7 +441,7 @@ public class Algorithms {
 				}
 				break;
 			case 2:
-				if (slope > LeftMostPointVal && curPoint.y < start.y) {
+				if (slope < LeftMostPointVal && curPoint.y > start.y) {
 					LeftMostPointVal = slope;
 					LeftMostPointIndex = i;
 				}
@@ -442,7 +453,8 @@ public class Algorithms {
 				}
 				break;
 			case 4:
-				if (slope < LeftMostPointVal && curPoint.y > start.y) {
+
+				if (slope > LeftMostPointVal && curPoint.y < start.y) {
 					LeftMostPointVal = slope;
 					LeftMostPointIndex = i;
 				}
