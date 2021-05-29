@@ -34,7 +34,7 @@ public class Gui {
 	private final int ctrlWidth = 180;
 	private final int inputBoxHeight = 200;
 
-	private static final Dimension windowSize = new Dimension(1200, 1300);
+	private static final Dimension windowSize = new Dimension(1000, 890);
 	private static JFrame generatorFrame;
 	private static JFrame compareFrame;
 	private static JSpinner numOfCustomersValue;

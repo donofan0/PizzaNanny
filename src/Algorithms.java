@@ -451,7 +451,6 @@ public class Algorithms {
 
 						Gui.algCompare.setListData(data);
 					}
-					ControlPanel.bestAlgorithem.setText("Best: " + algorithms[algorithms.length - 3]);
 				}
 
 				if (algoritemsPaths != null) {
@@ -469,8 +468,6 @@ public class Algorithms {
 					} else {
 						ControlPanel.bestAlgorithem.setText("Best: " + algorithms[algorithms.length - 3]);
 					}
-				} else {
-					ControlPanel.bestAlgorithem.setText("Best: " + algorithms[algorithms.length - 3]);
 				}
 
 				Gui.map.drawLines();

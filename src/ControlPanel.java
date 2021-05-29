@@ -277,6 +277,7 @@ public class ControlPanel extends JPanel {
 		startDrone.setText("Start Drone");
 		editMode = false;
 		editModeToggle.setText("Start Edit Mode");
+		bestAlgorithem.setText("");
 	}
 
 	public void drawOutput() {
