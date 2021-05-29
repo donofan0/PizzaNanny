@@ -31,17 +31,17 @@ public class ControlPanel extends JPanel {
 	public static boolean branchAlgorithmRunning = false;
 	public static JButton startDrone;
 	public static JProgressBar progress;
+	public static JLabel bestAlgorithem;
 
 	boolean editMode = false;
 	boolean showAddress = false;
-	JComboBox<String> algorithmSelect;
+	JComboBox algorithmSelect;
 
 	private JTextArea outputTextArea;
 	private JLabel punishment;
 	private JLabel distance;
 	private JSpinner repeatStepsValue;
 	private JButton editModeToggle;
-	private JLabel bestAlgorithem;
 	private JButton emojiToggle;
 	private JButton addressToggle;
 
@@ -64,7 +64,7 @@ public class ControlPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 0;
 
-		algorithmSelect = new JComboBox<String>(Algorithms.algorithms);
+		algorithmSelect = new JComboBox(Algorithms.algorithms);
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
 		algorithmSelect.setSelectedIndex(Algorithms.algorithms.length - 1);
 		this.add(algorithmSelect, c);
@@ -190,7 +190,7 @@ public class ControlPanel extends JPanel {
 		this.add(openComparison, c);
 		openComparison.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				submitButtonAction();
+				getUserInput();
 				if (Main.customers.length > 0) {
 					Gui.startComparisionWindow();
 				}
@@ -209,30 +209,8 @@ public class ControlPanel extends JPanel {
 	}
 
 	public void submitButtonAction() {
-		groupAlgorithmRunning = false;
-		branchAlgorithmRunning = false;
 
-		String[] input = Gui.inputTextArea.getText().trim().split("\\n");
-		ArrayList<Customer> tempCustomers = new ArrayList<Customer>();
-		for (int x = 0; x < input.length; x++) {
-			String[] currentLine = input[x].split(",");
-			if (currentLine.length < 5) {
-				continue;
-			}
-			Customer customer = new Customer(Integer.parseInt(currentLine[0].strip()), currentLine[1],
-					Integer.parseInt(currentLine[2].strip()), Double.parseDouble(currentLine[3].strip()),
-					Double.parseDouble(currentLine[4].strip()));
-			tempCustomers.add(customer);
-		}
-		Main.customers = new Customer[tempCustomers.size()];
-		Main.customers = tempCustomers.toArray(Main.customers);
-
-		repeatSteps = Integer.parseInt(repeatStepsValue.getValue().toString());
-
-		droneRunning = false;
-		startDrone.setText("Start Drone");
-		editMode = false;
-		editModeToggle.setText("Start Edit Mode");
+		getUserInput();
 
 		Gui.map.drawPoints();
 
@@ -254,7 +232,7 @@ public class ControlPanel extends JPanel {
 			Algorithms.calculateLargestTimeFirst();
 			break;
 		case 5:
-			Algorithms.calculateGroupAproximition();
+			Algorithms.calculateGroupAproximition(null);
 			break;
 		case 6:
 			Algorithms.calculateBranchAndBound();
@@ -268,6 +246,37 @@ public class ControlPanel extends JPanel {
 			drawOutput();
 			Gui.map.drawLines();
 		}
+	}
+
+	public void getUserInput() {
+		groupAlgorithmRunning = false;
+		branchAlgorithmRunning = false;
+
+		String[] input = Gui.inputTextArea.getText().trim().split("\\n");
+		ArrayList<Customer> tempCustomers = new ArrayList<Customer>();
+		for (int x = 0; x < input.length; x++) {
+			String[] currentLine = input[x].split(",");
+			if (currentLine.length < 5) {
+				continue;
+			}
+			Customer customer = new Customer(Integer.parseInt(currentLine[0].trim()), currentLine[1],
+					Integer.parseInt(currentLine[2].trim()), Double.parseDouble(currentLine[3].trim()),
+					Double.parseDouble(currentLine[4].trim()));
+			tempCustomers.add(customer);
+		}
+		Main.customers = new Customer[tempCustomers.size()];
+		Main.customers = tempCustomers.toArray(Main.customers);
+
+		if (Main.customers.length < 1) {
+			return;
+		}
+
+		repeatSteps = Integer.parseInt(repeatStepsValue.getValue().toString());
+
+		droneRunning = false;
+		startDrone.setText("Start Drone");
+		editMode = false;
+		editModeToggle.setText("Start Edit Mode");
 	}
 
 	public void drawOutput() {

@@ -68,7 +68,7 @@ public class Map extends JLayeredPane {
 	}
 
 	public void startDrone() {
-		if (Main.customers.length < 1) {
+		if (Main.bestPath.length < 1) {
 			return;
 		}
 

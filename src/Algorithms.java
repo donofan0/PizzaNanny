@@ -44,7 +44,7 @@ public class Algorithms {
 			SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
 
 			double[] timeDistance = Map.calculateTimeDistance();
-			String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
+			String hour = numFormat.format((int) ((timeDistance[1] / Map.driverSpeed) / 60));
 			String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
 
 			output[i + 1] = convertToTable(algorithms[i], 28);
@@ -55,9 +55,7 @@ public class Algorithms {
 			output[i + 1] += "|";
 		}
 
-		if (Main.customers.length <= 60) {
-			calculateGroupAproximition();
-		}
+		calculateGroupAproximition(null);
 
 		if (Main.customers.length < 12) {
 			calculateBranchAndBound();
@@ -69,8 +67,8 @@ public class Algorithms {
 	public static int compareAlogrithems() {
 		int bestAlgorithem = 0;
 		double bestTime = 999999999;
-		int[][] algoritemsPaths = new int[algorithms.length - 2][Main.customers.length];
-		for (int i = 0; i < algorithms.length - 2; i++) {
+		int[][] algoritemsPaths = new int[algorithms.length - 3][Main.customers.length];
+		for (int i = 0; i < algorithms.length - 3; i++) {
 			switch (i) {
 			case 0:
 				calculateNearestNeighbor(false);
@@ -88,8 +86,7 @@ public class Algorithms {
 				calculateLargestTimeFirst();
 				break;
 			case 5:
-				// TODO: FIX async
-				calculateGroupAproximition();
+				calculateGroupAproximition(null);
 				break;
 			}
 
@@ -103,6 +100,11 @@ public class Algorithms {
 		}
 
 		Main.bestPath = algoritemsPaths[bestAlgorithem];
+
+		calculateGroupAproximition(algoritemsPaths);
+		if (Main.customers.length < 12) {
+			calculateBranchAndBound();
+		}
 
 		return bestAlgorithem;
 	}
@@ -240,7 +242,7 @@ public class Algorithms {
 		ReworkBestPath(true);
 	}
 
-	public static void calculateGroupAproximition() {
+	public static void calculateGroupAproximition(final int[][] algoritemsPaths) {
 		SwingWorker<Boolean, Long> findPaths = new SwingWorker<Boolean, Long>() {
 			private long startTime = System.currentTimeMillis();
 			private double maxIterations = -1;
@@ -253,14 +255,13 @@ public class Algorithms {
 				ControlPanel.groupAlgorithmRunning = true;
 
 				int groupSize = 1;
-				if (Main.customers.length >= 6) {
-					groupSize = 6;
+				if (Main.customers.length > 60) {
+					groupSize = 10;
 				} else if (Main.customers.length > 50) {
 					groupSize = 10;
-				} else if (Main.customers.length > 60) {
-					groupSize = 9;
+				} else if (Main.customers.length >= 6) {
+					groupSize = 6;
 				}
-
 				int numOfGroups = (int) Math.ceil((float) Main.customers.length / (float) groupSize);
 				maxIterations = Algorithms.calculateFactorial(numOfGroups);
 
@@ -304,9 +305,41 @@ public class Algorithms {
 				}
 
 				double bestTime = 999999999;
+				int localBestGroup = -1;
 				int[] localBestPath = new int[Main.customers.length];
-
 				int[] permitation = new int[numOfGroups];
+				Arrays.fill(permitation, -1);
+				if (Main.customers.length > 60) {
+					for (int i = 0; i < numOfGroups; i++) {
+						bestTime = -1;
+						for (int groupIndex = 0; groupIndex < numOfGroups; groupIndex++) {
+							int[] group = groups[groupIndex];
+							float time = (float) Map.calculateTime(group);
+							if (time > bestTime && !Map.pathContains(permitation, groupIndex)) {
+								bestTime = time;
+								localBestGroup = groupIndex;
+							}
+						}
+						permitation[i] = localBestGroup;
+					}
+
+					int[] path = new int[Main.customers.length];
+					for (int groupIndex = 0; groupIndex < numOfGroups; groupIndex++) {
+						int group = permitation[groupIndex];
+						for (int point = 0; point < groups[group].length; point++) {
+							if (groupIndex * groupSize + point > Main.customers.length - 1) {
+								break;
+							}
+							path[groupIndex * groupSize + point] = groups[group][point];
+						}
+					}
+
+					Main.bestPath = path;
+
+					ReworkBestPath(true);
+					return true;
+				}
+
 				for (int i = 0; i < permitation.length; i++) {
 					permitation[i] = i;
 				}
@@ -346,13 +379,12 @@ public class Algorithms {
 						count++;
 
 						path = new int[Main.customers.length];
+						int currentPathIndex = 0;
 						for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
 							int group = permitation[groupIndex];
 							for (int point = 0; point < groups[group].length; point++) {
-								if (groupIndex * groupSize + point > Main.customers.length - 1) {
-									break;
-								}
-								path[groupIndex * groupSize + point] = groups[group][point];
+								path[currentPathIndex] = groups[group][point];
+								currentPathIndex++;
 							}
 						}
 						time = Map.calculateTime(path);
@@ -391,11 +423,6 @@ public class Algorithms {
 			protected void done() {
 				// this method is called when the background
 				// thread finishes execution
-				Gui.map.drawLines();
-				Gui.ctrlPanel.drawOutput();
-				ControlPanel.progress.setValue(100);
-				ControlPanel.groupAlgorithmRunning = false;
-
 				if (Gui.algCompare != null) {
 					ListModel model = Gui.algCompare.getModel();
 
@@ -412,7 +439,7 @@ public class Algorithms {
 						SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
 
 						double[] timeDistance = Map.calculateTimeDistance();
-						String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
+						String hour = numFormat.format((int) ((timeDistance[1] / Map.driverSpeed) / 60));
 						String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
 
 						data[data.length - 1] = convertToTable(algorithms[algorithms.length - 3], 28);
@@ -424,7 +451,32 @@ public class Algorithms {
 
 						Gui.algCompare.setListData(data);
 					}
+					ControlPanel.bestAlgorithem.setText("Best: " + algorithms[algorithms.length - 3]);
 				}
+
+				if (algoritemsPaths != null) {
+					double bestTime = 999999999;
+					int bestAlg = -1;
+					for (int i = 0; i < algoritemsPaths.length; i++) {
+						double time = Map.calculateTime(algoritemsPaths[i]);
+						if (time < bestTime) {
+							bestTime = time;
+							bestAlg = i;
+						}
+					}
+					if (Map.calculateTime() > bestTime) {
+						Main.bestPath = algoritemsPaths[bestAlg];
+					} else {
+						ControlPanel.bestAlgorithem.setText("Best: " + algorithms[algorithms.length - 3]);
+					}
+				} else {
+					ControlPanel.bestAlgorithem.setText("Best: " + algorithms[algorithms.length - 3]);
+				}
+
+				Gui.map.drawLines();
+				Gui.ctrlPanel.drawOutput();
+				ControlPanel.progress.setValue(100);
+				ControlPanel.groupAlgorithmRunning = false;
 			}
 		};
 
@@ -532,7 +584,7 @@ public class Algorithms {
 						SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
 
 						double[] timeDistance = Map.calculateTimeDistance();
-						String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
+						String hour = numFormat.format((int) ((timeDistance[1] / Map.driverSpeed) / 60));
 						String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
 
 						data[data.length - 1] = convertToTable(algorithms[algorithms.length - 2], 28);

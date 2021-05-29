@@ -29,7 +29,7 @@ public class Gui {
 	public static JTextArea inputTextArea;
 	public static Map map;
 	public static ControlPanel ctrlPanel;
-	public static JList<String> algCompare;
+	public static JList algCompare;
 
 	private final int ctrlWidth = 180;
 	private final int inputBoxHeight = 200;
@@ -134,7 +134,7 @@ public class Gui {
 
 		String[] results = Algorithms.compareAlogrithemsWithResults();
 
-		algCompare = new JList<String>(results); // data has type Object[]
+		algCompare = new JList(results); // data has type Object[]
 		algCompare.setLayoutOrientation(JList.VERTICAL);
 		algCompare.setFont(new Font("monospaced", Font.BOLD, 16));
 		algCompare.setSelectedIndex(0);
