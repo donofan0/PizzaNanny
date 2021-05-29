@@ -253,7 +253,7 @@ public class ControlPanel extends JPanel {
 			Algorithms.calculateGroupAproximition();
 			break;
 		case 6:
-			Algorithms.calculateDepthFirstSearch();
+			Algorithms.calculateBranchAndBound();
 			break;
 		default:
 			int best = Algorithms.compareAlogrithems();

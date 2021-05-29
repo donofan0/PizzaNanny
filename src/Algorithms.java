@@ -9,7 +9,7 @@ import javax.swing.SwingWorker;
 
 public class Algorithms {
 	public final static String[] algorithms = { "Nearest Neighbor(Distance)", "Nearest Neighbor(Time)",
-			"Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "Group Aproximition", "Depth First Search",
+			"Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "Group Aproximition", "Branch and Bound",
 			"All of the Above" };
 	public static boolean algorithemRunning = false;
 
@@ -59,7 +59,7 @@ public class Algorithms {
 		}
 
 		if (Main.customers.length < 13) {
-			calculateDepthFirstSearch();
+			calculateBranchAndBound();
 		}
 
 		return output;
@@ -239,10 +239,16 @@ public class Algorithms {
 	}
 
 	public static void calculateGroupAproximition() {
+
 		Main.bestPath = new int[Main.customers.length];
 		Arrays.fill(Main.bestPath, -1);
 
-		int groupSize = 6;
+		int groupSize = 1;
+		if (Main.customers.length >= 6) {
+			groupSize = 6;
+		} else if (Main.customers.length > 50) {
+			groupSize = 10;
+		}
 
 		int numOfGroups = (int) Math.ceil((float) Main.customers.length / (float) groupSize);
 		int[][] groups = new int[numOfGroups][groupSize];
@@ -276,56 +282,33 @@ public class Algorithms {
 				}
 				group[a] = closestCustomer;
 			}
-			groups[i] = Arrays.copyOf(calculateDepthFirstSearch(Map.trimPath(group)), Map.trimPath(group).length);
+			groups[i] = Arrays.copyOf(calculateBranchAndBound(Map.trimPath(group)), Map.trimPath(group).length);
 		}
 
 		double bestTime = 999999999;
 		int[] localBestPath = new int[Main.customers.length];
-		int[][] groupPermitations = generateAllPermitations(numOfGroups);
-		for (int j = 0; j < groupPermitations.length; j++) {
-			int[] permitation = groupPermitations[j];
-			int[] path = new int[Main.customers.length];
-			for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
-				int group = permitation[groupIndex];
-				for (int point = 0; point < groups[group].length; point++) {
-					if (groupIndex * groupSize + point > Main.customers.length - 1) {
-						break;
-					}
-					path[groupIndex * groupSize + point] = groups[group][point];
-				}
-			}
-			double time = Map.calculateTime(path);
-			if (time < bestTime) {
-				bestTime = time;
-				localBestPath = Arrays.copyOf(path, path.length);
-			}
-		}
 
-		Main.bestPath = localBestPath;
-
-		ReworkBestPath(true);
-	}
-
-	private static boolean groupsContains(int[][] groups, int value) {
-		for (int i = 0; i < groups.length; i++) {
-			if (Map.pathContains(groups[i], value)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static int[][] generateAllPermitations(int size) {
-		int[][] output = new int[calculateFactorial(size)][size];
-
-		int[] permitation = new int[size];
+		int[] permitation = new int[numOfGroups];
 		for (int i = 0; i < permitation.length; i++) {
 			permitation[i] = i;
 		}
-		output[0] = Arrays.copyOf(permitation, permitation.length);
+		int[] path = new int[Main.customers.length];
+		for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
+			int group = permitation[groupIndex];
+			for (int point = 0; point < groups[group].length; point++) {
+				if (groupIndex * groupSize + point > Main.customers.length - 1) {
+					break;
+				}
+				path[groupIndex * groupSize + point] = groups[group][point];
+			}
+		}
+		double time = Map.calculateTime(path);
+		if (time < bestTime) {
+			bestTime = time;
+			localBestPath = Arrays.copyOf(path, path.length);
+		}
 
 		int[] swapWith = new int[permitation.length];
-		int count = 0;
 		int i = 0;
 		while (i < swapWith.length) {
 			if (swapWith[i] < i) {
@@ -339,60 +322,37 @@ public class Algorithms {
 					permitation[swapWith[i]] = temp;
 				}
 
-				count++;
 				swapWith[i]++;
 				i = 0;
 
-				output[count] = Arrays.copyOf(permitation, permitation.length);
-			} else {
-				swapWith[i] = 0;
-				i++;
-			}
-		}
-		return output;
-	}
-
-	private static int[] calculateDepthFirstSearch(int[] path) {
-		float bestTime = calculateTimeUpTo(path, 999999999, true);
-		int[] curBestPath = new int[path.length];
-		for (int j = 0; j < curBestPath.length; j++) {
-			curBestPath[j] = path[j];
-		}
-
-		int[] swapWith = new int[path.length];
-		int i = 0;
-		while (i < swapWith.length) {
-			if (swapWith[i] < i) {
-				if (i % 2 == 0) {
-					int temp = path[i];
-					path[i] = path[0];
-					path[0] = temp;
-				} else {
-					int temp = path[i];
-					path[i] = path[swapWith[i]];
-					path[swapWith[i]] = temp;
-				}
-
-				float time = calculateTimeUpTo(path, bestTime, false);
-				if (time < bestTime) {
-					for (int j = 0; j < curBestPath.length; j++) {
-						curBestPath[j] = path[j];
+				path = new int[Main.customers.length];
+				for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
+					int group = permitation[groupIndex];
+					for (int point = 0; point < groups[group].length; point++) {
+						if (groupIndex * groupSize + point > Main.customers.length - 1) {
+							break;
+						}
+						path[groupIndex * groupSize + point] = groups[group][point];
 					}
-					bestTime = time;
 				}
-
-				swapWith[i]++;
-				i = 0;
+				time = Map.calculateTime(path);
+				if (time < bestTime) {
+					bestTime = time;
+					localBestPath = Arrays.copyOf(path, path.length);
+				}
 			} else {
 				swapWith[i] = 0;
 				i++;
 			}
 		}
-		return curBestPath;
+
+		Main.bestPath = localBestPath;
+
+		ReworkBestPath(true);
 	}
 
 	// Guaranteed perfect answer
-	public static void calculateDepthFirstSearch() {
+	public static void calculateBranchAndBound() {
 		ControlPanel.AlgorithmRunning = true;
 		SwingWorker<Boolean, Long> findPaths = new SwingWorker<Boolean, Long>() {
 			private float bestTime = 999999999;
@@ -509,6 +469,54 @@ public class Algorithms {
 
 		// executes the swingworker on worker thread
 		findPaths.execute();
+	}
+
+	private static int[] calculateBranchAndBound(int[] path) {
+		float bestTime = calculateTimeUpTo(path, 999999999, true);
+		int[] curBestPath = new int[path.length];
+		for (int j = 0; j < curBestPath.length; j++) {
+			curBestPath[j] = path[j];
+		}
+
+		int[] swapWith = new int[path.length];
+		int i = 0;
+		while (i < swapWith.length) {
+			if (swapWith[i] < i) {
+				if (i % 2 == 0) {
+					int temp = path[i];
+					path[i] = path[0];
+					path[0] = temp;
+				} else {
+					int temp = path[i];
+					path[i] = path[swapWith[i]];
+					path[swapWith[i]] = temp;
+				}
+
+				float time = calculateTimeUpTo(path, bestTime, false);
+				if (time < bestTime) {
+					for (int j = 0; j < curBestPath.length; j++) {
+						curBestPath[j] = path[j];
+					}
+					bestTime = time;
+				}
+
+				swapWith[i]++;
+				i = 0;
+			} else {
+				swapWith[i] = 0;
+				i++;
+			}
+		}
+		return curBestPath;
+	}
+
+	private static boolean groupsContains(int[][] groups, int value) {
+		for (int i = 0; i < groups.length; i++) {
+			if (Map.pathContains(groups[i], value)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static float calculateTimeUpTo(int[] path, float max, boolean includeApache) {
