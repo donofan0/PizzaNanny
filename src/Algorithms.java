@@ -242,7 +242,7 @@ public class Algorithms {
 		Main.bestPath = new int[Main.customers.length];
 		Arrays.fill(Main.bestPath, -1);
 
-		int groupSize = 3;
+		int groupSize = 6;
 
 		int numOfGroups = (int) Math.ceil((float) Main.customers.length / (float) groupSize);
 		int[][] groups = new int[numOfGroups][groupSize];
@@ -353,7 +353,7 @@ public class Algorithms {
 	}
 
 	private static int[] calculateDepthFirstSearch(int[] path) {
-		float bestTime = calculateTimeUpTo(path, 999999999);
+		float bestTime = calculateTimeUpTo(path, 999999999, true);
 		int[] curBestPath = new int[path.length];
 		for (int j = 0; j < curBestPath.length; j++) {
 			curBestPath[j] = path[j];
@@ -373,7 +373,7 @@ public class Algorithms {
 					path[swapWith[i]] = temp;
 				}
 
-				float time = calculateTimeUpTo(path, bestTime);
+				float time = calculateTimeUpTo(path, bestTime, false);
 				if (time < bestTime) {
 					for (int j = 0; j < curBestPath.length; j++) {
 						curBestPath[j] = path[j];
@@ -408,7 +408,7 @@ public class Algorithms {
 					path[i] = i;
 					Main.bestPath[i] = i;
 				}
-				bestTime = calculateTimeUpTo(path, 999999999);
+				bestTime = calculateTimeUpTo(path, 999999999, true);
 
 				int[] swapWith = new int[Main.customers.length];
 				int i = 0;
@@ -425,7 +425,7 @@ public class Algorithms {
 							path[swapWith[i]] = temp;
 						}
 
-						float time = calculateTimeUpTo(path, bestTime);
+						float time = calculateTimeUpTo(path, bestTime, true);
 						if (time < bestTime) {
 							for (int j = 0; j < path.length; j++) {
 								Main.bestPath[j] = path[j];
@@ -511,31 +511,31 @@ public class Algorithms {
 		findPaths.execute();
 	}
 
-	private static float calculateTimeUpTo(int[] path, float max) {
+	private static float calculateTimeUpTo(int[] path, float max, boolean includeApache) {
 		float lastDistance = 0;
 		float lateMins = 0;
+		Point start;
+		Customer endCustomer;
 
-		Point start = Map.apachePizza;
-		Customer endCustomer = Main.customers[path[0]];
+		if (includeApache) {
+			start = Map.apachePizza;
+			endCustomer = Main.customers[path[0]];
 
-		float distance = (float) start.distance(endCustomer.location);
-		distance += lastDistance;
-		lastDistance = distance;
+			lastDistance = (float) start.distance(endCustomer.location);
 
-		float time = (distance / Map.driverSpeed) + endCustomer.waitTime;
-		if (time > 30) {
-			lateMins += time - 30;
+			float time = (lastDistance / Map.driverSpeed) + endCustomer.waitTime;
+			if (time > 30) {
+				lateMins += time - 30;
+			}
 		}
 
 		for (int i = 1; i < path.length; i++) {
 			start = Main.customers[path[i - 1]].location;
 			endCustomer = Main.customers[path[i]];
 
-			distance = (float) start.distance(endCustomer.location);
-			distance += lastDistance;
-			lastDistance = distance;
+			lastDistance += (float) start.distance(endCustomer.location);
 
-			time = (distance / Map.driverSpeed) + endCustomer.waitTime;
+			float time = (lastDistance / Map.driverSpeed) + endCustomer.waitTime;
 			if (time > 30) {
 				lateMins += time - 30;
 			}
