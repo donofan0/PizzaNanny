@@ -143,6 +143,11 @@ public class Gui {
 
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
+				if (e.getValueIsAdjusting() || ControlPanel.branchAlgorithmRunning
+						|| ControlPanel.groupAlgorithmRunning) {
+					return;
+				}
+
 				int selectedAlg = algCompare.getSelectedIndex() - 1;
 				if (selectedAlg < 0 || selectedAlg > Algorithms.algorithms.length - 2) {
 					return;

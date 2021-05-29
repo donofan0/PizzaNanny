@@ -14,9 +14,9 @@ public class Algorithms {
 	public static boolean algorithemRunning = false;
 
 	public static String[] compareAlogrithemsWithResults() {
-		String[] output = new String[algorithms.length];
+		String[] output = new String[algorithms.length - 2];
 		output[0] = "|          Algorithm         | Distance | Angry Mins | Journey Time(hh:mm) | Proccessing Time(mm:ss:ms) |";
-		for (int i = 0; i < algorithms.length - 2; i++) {
+		for (int i = 0; i < algorithms.length - 3; i++) {
 			long startTime = System.currentTimeMillis();
 
 			switch (i) {
@@ -34,9 +34,6 @@ public class Algorithms {
 				break;
 			case 4:
 				calculateLargestTimeFirst();
-				break;
-			case 5:
-				calculateGroupAproximition();
 				break;
 			}
 
@@ -58,7 +55,11 @@ public class Algorithms {
 			output[i + 1] += "|";
 		}
 
-		if (Main.customers.length < 13) {
+		if (Main.customers.length <= 60) {
+			calculateGroupAproximition();
+		}
+
+		if (Main.customers.length < 12) {
 			calculateBranchAndBound();
 		}
 
@@ -87,6 +88,7 @@ public class Algorithms {
 				calculateLargestTimeFirst();
 				break;
 			case 5:
+				// TODO: FIX async
 				calculateGroupAproximition();
 				break;
 			}
@@ -239,93 +241,76 @@ public class Algorithms {
 	}
 
 	public static void calculateGroupAproximition() {
+		SwingWorker<Boolean, Long> findPaths = new SwingWorker<Boolean, Long>() {
+			private long startTime = System.currentTimeMillis();
+			private double maxIterations = -1;
 
-		Main.bestPath = new int[Main.customers.length];
-		Arrays.fill(Main.bestPath, -1);
+			@Override
+			protected Boolean doInBackground() throws Exception {
+				while (ControlPanel.branchAlgorithmRunning) {
+					Thread.sleep(1);
+				}
+				ControlPanel.groupAlgorithmRunning = true;
 
-		int groupSize = 1;
-		if (Main.customers.length >= 6) {
-			groupSize = 6;
-		} else if (Main.customers.length > 50) {
-			groupSize = 10;
-		}
+				int groupSize = 1;
+				if (Main.customers.length >= 6) {
+					groupSize = 6;
+				} else if (Main.customers.length > 50) {
+					groupSize = 10;
+				} else if (Main.customers.length > 60) {
+					groupSize = 9;
+				}
 
-		int numOfGroups = (int) Math.ceil((float) Main.customers.length / (float) groupSize);
-		int[][] groups = new int[numOfGroups][groupSize];
+				int numOfGroups = (int) Math.ceil((float) Main.customers.length / (float) groupSize);
+				maxIterations = Algorithms.calculateFactorial(numOfGroups);
 
-		for (int i = 0; i < numOfGroups; i++) {
-			Arrays.fill(groups[i], -1);
-		}
+				Main.bestPath = new int[Main.customers.length];
+				for (int i = 0; i < Main.customers.length; i++) {
+					Main.bestPath[i] = i;
+				}
 
-		for (int i = 0; i < numOfGroups; i++) {
-			int curCustomerIndex = 0;
-			while (groupsContains(groups, curCustomerIndex)) {
-				curCustomerIndex++;
-			}
-			Point curCustomer = Main.customers[curCustomerIndex].location;
+				int[][] groups = new int[numOfGroups][groupSize];
 
-			int[] group = new int[groupSize];
-			Arrays.fill(group, -1);
-			for (int a = 0; a < groupSize; a++) {
-				int closestCustomer = -1;
-				double shortestDist = 999999999;
-				for (int j = 0; j < Main.customers.length; j++) {
-					if (closestCustomer == j) {
-						continue;
+				for (int i = 0; i < numOfGroups; i++) {
+					Arrays.fill(groups[i], -1);
+				}
+
+				for (int i = 0; i < numOfGroups; i++) {
+					int curCustomerIndex = 0;
+					while (groupsContains(groups, curCustomerIndex)) {
+						curCustomerIndex++;
 					}
-					Customer closestCustomerPossibly = Main.customers[j];
-					double distance = curCustomer.distance(closestCustomerPossibly.location);
-					if (distance < shortestDist && !Map.pathContains(group, j) && !groupsContains(groups, j)) {
-						shortestDist = distance;
-						closestCustomer = j;
+					Point curCustomer = Main.customers[curCustomerIndex].location;
+
+					int[] group = new int[groupSize];
+					Arrays.fill(group, -1);
+					for (int a = 0; a < groupSize; a++) {
+						int closestCustomer = -1;
+						double shortestDist = 999999999;
+						for (int j = 0; j < Main.customers.length; j++) {
+							if (closestCustomer == j) {
+								continue;
+							}
+							Customer closestCustomerPossibly = Main.customers[j];
+							double distance = curCustomer.distance(closestCustomerPossibly.location);
+							if (distance < shortestDist && !Map.pathContains(group, j) && !groupsContains(groups, j)) {
+								shortestDist = distance;
+								closestCustomer = j;
+							}
+						}
+						group[a] = closestCustomer;
 					}
-				}
-				group[a] = closestCustomer;
-			}
-			groups[i] = Arrays.copyOf(calculateBranchAndBound(Map.trimPath(group)), Map.trimPath(group).length);
-		}
-
-		double bestTime = 999999999;
-		int[] localBestPath = new int[Main.customers.length];
-
-		int[] permitation = new int[numOfGroups];
-		for (int i = 0; i < permitation.length; i++) {
-			permitation[i] = i;
-		}
-		int[] path = new int[Main.customers.length];
-		for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
-			int group = permitation[groupIndex];
-			for (int point = 0; point < groups[group].length; point++) {
-				if (groupIndex * groupSize + point > Main.customers.length - 1) {
-					break;
-				}
-				path[groupIndex * groupSize + point] = groups[group][point];
-			}
-		}
-		double time = Map.calculateTime(path);
-		if (time < bestTime) {
-			bestTime = time;
-			localBestPath = Arrays.copyOf(path, path.length);
-		}
-
-		int[] swapWith = new int[permitation.length];
-		int i = 0;
-		while (i < swapWith.length) {
-			if (swapWith[i] < i) {
-				if (i % 2 == 0) {
-					int temp = permitation[i];
-					permitation[i] = permitation[0];
-					permitation[0] = temp;
-				} else {
-					int temp = permitation[i];
-					permitation[i] = permitation[swapWith[i]];
-					permitation[swapWith[i]] = temp;
+					groups[i] = Arrays.copyOf(calculateBranchAndBound(Map.trimPath(group)), Map.trimPath(group).length);
 				}
 
-				swapWith[i]++;
-				i = 0;
+				double bestTime = 999999999;
+				int[] localBestPath = new int[Main.customers.length];
 
-				path = new int[Main.customers.length];
+				int[] permitation = new int[numOfGroups];
+				for (int i = 0; i < permitation.length; i++) {
+					permitation[i] = i;
+				}
+				int[] path = new int[Main.customers.length];
 				for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
 					int group = permitation[groupIndex];
 					for (int point = 0; point < groups[group].length; point++) {
@@ -335,32 +320,134 @@ public class Algorithms {
 						path[groupIndex * groupSize + point] = groups[group][point];
 					}
 				}
-				time = Map.calculateTime(path);
+				double time = Map.calculateTime(path);
 				if (time < bestTime) {
 					bestTime = time;
 					localBestPath = Arrays.copyOf(path, path.length);
 				}
-			} else {
-				swapWith[i] = 0;
-				i++;
+
+				int[] swapWith = new int[permitation.length];
+				int i = 0;
+				long count = 0;
+				while (i < swapWith.length && ControlPanel.groupAlgorithmRunning) {
+					if (swapWith[i] < i) {
+						if (i % 2 == 0) {
+							int temp = permitation[i];
+							permitation[i] = permitation[0];
+							permitation[0] = temp;
+						} else {
+							int temp = permitation[i];
+							permitation[i] = permitation[swapWith[i]];
+							permitation[swapWith[i]] = temp;
+						}
+
+						swapWith[i]++;
+						i = 0;
+						count++;
+
+						path = new int[Main.customers.length];
+						for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
+							int group = permitation[groupIndex];
+							for (int point = 0; point < groups[group].length; point++) {
+								if (groupIndex * groupSize + point > Main.customers.length - 1) {
+									break;
+								}
+								path[groupIndex * groupSize + point] = groups[group][point];
+							}
+						}
+						time = Map.calculateTime(path);
+						if (time < bestTime) {
+							bestTime = time;
+							localBestPath = Arrays.copyOf(path, path.length);
+						}
+						publish(count);
+					} else {
+						swapWith[i] = 0;
+						i++;
+					}
+				}
+
+				Main.bestPath = localBestPath;
+
+				ReworkBestPath(true);
+				return true;
 			}
-		}
 
-		Main.bestPath = localBestPath;
+			@Override
+			protected void process(List<Long> chunks) {
+				/*
+				 * sets the label to its new coordinates and size this is called in batches as
+				 * in it could execute like this
+				 * doInBackground,doInBackground,doInBackground,doInBackground, process,
+				 * process,doInBackground, process, process, process that is why it has to get
+				 * the next item in the list
+				 */
+				long count = chunks.get(chunks.size() - 1);
 
-		ReworkBestPath(true);
+				ControlPanel.progress.setValue((int) Math.round((count * 100) / maxIterations));
+			}
+
+			@Override
+			protected void done() {
+				// this method is called when the background
+				// thread finishes execution
+				Gui.map.drawLines();
+				Gui.ctrlPanel.drawOutput();
+				ControlPanel.progress.setValue(100);
+				ControlPanel.groupAlgorithmRunning = false;
+
+				if (Gui.algCompare != null) {
+					ListModel model = Gui.algCompare.getModel();
+
+					if (model.getSize() < algorithms.length) {
+						String[] data = new String[model.getSize() + 1];
+						for (int i = 0; i < model.getSize(); i++) {
+							data[i] = (String) model.getElementAt(i);
+						}
+
+						long currentTime = System.currentTimeMillis();
+						NumberFormat numFormat = NumberFormat.getInstance();
+						numFormat.setMaximumFractionDigits(0);
+						numFormat.setMinimumIntegerDigits(2);
+						SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
+
+						double[] timeDistance = Map.calculateTimeDistance();
+						String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
+						String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
+
+						data[data.length - 1] = convertToTable(algorithms[algorithms.length - 3], 28);
+						data[data.length - 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
+						data[data.length - 1] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
+						data[data.length - 1] += convertToTable(hour + ":" + min, 21);
+						data[data.length - 1] += convertToTable(timeFromat.format(currentTime - startTime), 28);
+						data[data.length - 1] += "|";
+
+						Gui.algCompare.setListData(data);
+					}
+				}
+			}
+		};
+
+		// executes the swingworker on worker thread
+		findPaths.execute();
 	}
 
 	// Guaranteed perfect answer
 	public static void calculateBranchAndBound() {
-		ControlPanel.AlgorithmRunning = true;
 		SwingWorker<Boolean, Long> findPaths = new SwingWorker<Boolean, Long>() {
 			private float bestTime = 999999999;
 			private long startTime = System.currentTimeMillis();
-			private long maxIterations = -1;
+			private double maxIterations = -1;
 
 			@Override
 			protected Boolean doInBackground() throws Exception {
+				while (ControlPanel.groupAlgorithmRunning) {
+					Thread.sleep(1);
+				}
+				ControlPanel.branchAlgorithmRunning = true;
+
+				maxIterations = Algorithms.calculateFactorial(Main.customers.length);
+
 				Main.bestPath = new int[Main.customers.length];
 
 				int[] path = new int[Main.customers.length];
@@ -373,7 +460,7 @@ public class Algorithms {
 				int[] swapWith = new int[Main.customers.length];
 				int i = 0;
 				long count = 0;
-				while (i < swapWith.length && ControlPanel.AlgorithmRunning) {
+				while (i < swapWith.length && ControlPanel.branchAlgorithmRunning) {
 					if (swapWith[i] < i) {
 						if (i % 2 == 0) {
 							int temp = path[i];
@@ -417,13 +504,7 @@ public class Algorithms {
 				 */
 				long count = chunks.get(chunks.size() - 1);
 
-				if (maxIterations <= 0) {
-					// first run
-					maxIterations = Algorithms.calculateFactorial(Main.customers.length);
-					return;
-				}
-
-				ControlPanel.progress.setValue(Math.round((count * 100) / maxIterations));
+				ControlPanel.progress.setValue((int) Math.round((count * 100) / maxIterations));
 			}
 
 			@Override
@@ -433,12 +514,12 @@ public class Algorithms {
 				Gui.map.drawLines();
 				Gui.ctrlPanel.drawOutput();
 				ControlPanel.progress.setValue(100);
-				ControlPanel.AlgorithmRunning = false;
+				ControlPanel.branchAlgorithmRunning = false;
 
 				if (Gui.algCompare != null) {
 					ListModel model = Gui.algCompare.getModel();
 
-					if (model.getSize() <= algorithms.length) {
+					if (model.getSize() < algorithms.length) {
 						String[] data = new String[model.getSize() + 1];
 						for (int i = 0; i < model.getSize(); i++) {
 							data[i] = (String) model.getElementAt(i);
@@ -454,12 +535,12 @@ public class Algorithms {
 						String hour = numFormat.format((timeDistance[1] / Map.driverSpeed) / 60);
 						String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
 
-						data[model.getSize() - 1] = convertToTable("Async Brute Force", 28);
-						data[model.getSize() - 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
-						data[model.getSize() - 1] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
-						data[model.getSize() - 1] += convertToTable(hour + ":" + min, 21);
-						data[model.getSize() - 1] += convertToTable(timeFromat.format(currentTime - startTime), 28);
-						data[model.getSize() - 1] += "|";
+						data[data.length - 1] = convertToTable(algorithms[algorithms.length - 2], 28);
+						data[data.length - 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
+						data[data.length - 1] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
+						data[data.length - 1] += convertToTable(hour + ":" + min, 21);
+						data[data.length - 1] += convertToTable(timeFromat.format(currentTime - startTime), 28);
+						data[data.length - 1] += "|";
 
 						Gui.algCompare.setListData(data);
 					}
@@ -555,7 +636,7 @@ public class Algorithms {
 		return lateMins;
 	}
 
-	public static int calculateFactorial(int in) {
+	public static double calculateFactorial(int in) {
 		if (in == 1 || in == 2) {
 			return in;
 		} else if (in == 3) {

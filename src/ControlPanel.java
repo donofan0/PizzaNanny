@@ -27,7 +27,8 @@ public class ControlPanel extends JPanel {
 	public static boolean showEmoji = false;
 	public static int repeatSteps = 10;
 	public static boolean droneRunning = false;
-	public static boolean AlgorithmRunning = false;
+	public static boolean groupAlgorithmRunning = false;
+	public static boolean branchAlgorithmRunning = false;
 	public static JButton startDrone;
 	public static JProgressBar progress;
 
@@ -207,6 +208,9 @@ public class ControlPanel extends JPanel {
 	}
 
 	public void submitButtonAction() {
+		groupAlgorithmRunning = false;
+		branchAlgorithmRunning = false;
+
 		String[] input = Gui.inputTextArea.getText().trim().split("\\n");
 		ArrayList<Customer> tempCustomers = new ArrayList<Customer>();
 		for (int x = 0; x < input.length; x++) {
@@ -228,7 +232,6 @@ public class ControlPanel extends JPanel {
 		startDrone.setText("Start Drone");
 		editMode = false;
 		editModeToggle.setText("Start Edit Mode");
-		ControlPanel.AlgorithmRunning = false;
 
 		Gui.map.drawPoints();
 
