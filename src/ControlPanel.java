@@ -253,7 +253,7 @@ public class ControlPanel extends JPanel {
 			Algorithms.calculateLargestTimeFirst();
 			break;
 		case 5:
-			Algorithms.calculateGroupAproximition(null);
+			Algorithms.calculateGroupApproximation(null);
 			break;
 		case 6:
 			Algorithms.calculateBranchAndBound();
@@ -289,9 +289,8 @@ public class ControlPanel extends JPanel {
 			if (currentLine.length < 5) {
 				continue;
 			}
-			Customer customer = new Customer(Integer.parseInt(currentLine[0].trim()), currentLine[1],
-					Integer.parseInt(currentLine[2].trim()), Double.parseDouble(currentLine[3].trim()),
-					Double.parseDouble(currentLine[4].trim()));
+			Customer customer = new Customer(Integer.parseInt(currentLine[0].trim()), currentLine[1], Integer.parseInt(currentLine[2].trim()),
+					Double.parseDouble(currentLine[3].trim()), Double.parseDouble(currentLine[4].trim()));
 			tempCustomers.add(customer);
 		}
 		// convert from arraylist to int[]
