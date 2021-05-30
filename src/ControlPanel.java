@@ -33,10 +33,10 @@ public class ControlPanel extends JPanel {
 	public static JProgressBar progress;
 	public static JLabel bestAlgorithem;
 
-	boolean editMode = false;
-	boolean showAddress = false;
-	JComboBox algorithmSelect;
+	public boolean editMode = false;
+	public JComboBox algorithmSelect;
 
+	private boolean showAddress = false;
 	private JTextArea outputTextArea;
 	private JLabel punishment;
 	private JLabel distance;
@@ -64,15 +64,19 @@ public class ControlPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 0;
 
+		// used to select the chosen algorithm
 		algorithmSelect = new JComboBox(Algorithms.algorithms);
 		algorithmSelect.setPreferredSize(new Dimension(20, 20));
 		algorithmSelect.setSelectedIndex(Algorithms.algorithms.length - 1);
 		this.add(algorithmSelect, c);
 
+		// progress bar
 		progress = new JProgressBar(0, 100);
 		c.gridy++;
 		this.add(progress, c);
 
+		// repeat steps identifies how many times to rework the path which was output
+		// from the chosen algorithm
 		JLabel repeatStepsLabel = new JLabel("Repeat Steps:");
 		c.gridwidth = 1;
 		c.gridy++;
@@ -83,20 +87,24 @@ public class ControlPanel extends JPanel {
 		c.gridx = 1;
 		this.add(repeatStepsValue, c);
 
+		// displays angry Minutes
 		punishment = new JLabel("Angry Minutes: ");
 		c.gridwidth = 2;
 		c.gridx = 0;
 		c.gridy++;
 		this.add(punishment, c);
 
+		// displays total distance
 		distance = new JLabel("Total distance: m");
 		c.gridy++;
 		this.add(distance, c);
 
+		// displays the best algorithm when using all of the above algorithm
 		bestAlgorithem = new JLabel("");
 		c.gridy++;
 		this.add(bestAlgorithem, c);
 
+		// where the output list is displayed
 		outputTextArea = new JTextArea();
 		outputTextArea.setLineWrap(true);
 		JScrollPane outputDeliverys = new JScrollPane(outputTextArea);
@@ -105,6 +113,7 @@ public class ControlPanel extends JPanel {
 		c.gridy++;
 		this.add(outputDeliverys, c);
 
+		// toggles whether to display the addresses
 		addressToggle = new JButton("Show Address");
 		c.weighty = 1;
 		c.gridy++;
@@ -123,6 +132,7 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
+		// toggle whether to display emoji instead of dots
 		emojiToggle = new JButton("Show Emoji");
 		c.gridy++;
 		this.add(emojiToggle, c);
@@ -140,6 +150,7 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
+		// button to start the drone
 		startDrone = new JButton("Start Drone");
 		c.gridy++;
 		this.add(startDrone, c);
@@ -157,6 +168,7 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
+		// clears the path and starts edit mode
 		editModeToggle = new JButton("Start Edit Mode");
 		c.gridy++;
 		this.add(editModeToggle, c);
@@ -169,13 +181,14 @@ public class ControlPanel extends JPanel {
 					editMode = true;
 					editModeToggle.setText("Stop Edit Mode");
 
-					Main.bestPath = new int[0];
+					TSP.bestPath = new int[0];
 					Gui.map.drawLines();
 					Gui.map.drawPoints();
 				}
 			}
 		});
 
+		// opens the points generator screen
 		JButton openRandomPoints = new JButton("Generate Points");
 		c.gridy++;
 		this.add(openRandomPoints, c);
@@ -185,18 +198,21 @@ public class ControlPanel extends JPanel {
 			}
 		});
 
+		// opens the points Comparison screen
 		JButton openComparison = new JButton("Open Comparison");
 		c.gridy++;
 		this.add(openComparison, c);
 		openComparison.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				getUserInput();
-				if (Main.customers.length > 0) {
+				if (TSP.customers.length > 0) {
 					Gui.startComparisionWindow();
 				}
 			}
 		});
 
+		// submits the data in the input box and runs the algorithm
+		// also resets and cancels a lot of actions
 		JButton submit = new JButton("Submit");
 		submit.setPreferredSize(new Dimension(100, 20));
 		c.gridy++;
@@ -208,12 +224,17 @@ public class ControlPanel extends JPanel {
 		});
 	}
 
+	// inputs the data in the input box into the system and runs the chosen
+	// algorithm
+	// also resets and cancels a lot of actions
 	public void submitButtonAction() {
-
+		// brings the user input into the customers array
 		getUserInput();
 
+		// draw the points
 		Gui.map.drawPoints();
 
+		// runs the algorithem which is selected
 		int algSelected = algorithmSelect.getSelectedIndex();
 		switch (algSelected) {
 		case 0:
@@ -242,16 +263,25 @@ public class ControlPanel extends JPanel {
 			bestAlgorithem.setText("Best: " + algorithmSelect.getItemAt(best));
 			break;
 		}
-		if (algSelected != 6) {
+		// does not draw the output if it is one of the asynchronous algorithms
+		if (algSelected != 6 || algSelected != 5) {
+			// draws the output and lines
 			drawOutput();
 			Gui.map.drawLines();
 		}
 	}
 
+	// brings the user input into the customers array
+	// as well as cancels and resets some tasks
 	public void getUserInput() {
+		// stops the asynchronous algorithms if they are running
 		groupAlgorithmRunning = false;
 		branchAlgorithmRunning = false;
 
+		// brings the user input into the customers array
+		// array list is used because at this point i dont know how many customers there
+		// are
+		// this is because the code is tolerant to empty lines
 		String[] input = Gui.inputTextArea.getText().trim().split("\\n");
 		ArrayList<Customer> tempCustomers = new ArrayList<Customer>();
 		for (int x = 0; x < input.length; x++) {
@@ -264,15 +294,17 @@ public class ControlPanel extends JPanel {
 					Double.parseDouble(currentLine[4].trim()));
 			tempCustomers.add(customer);
 		}
-		Main.customers = new Customer[tempCustomers.size()];
-		Main.customers = tempCustomers.toArray(Main.customers);
+		// convert from arraylist to int[]
+		TSP.customers = new Customer[tempCustomers.size()];
+		TSP.customers = tempCustomers.toArray(TSP.customers);
 
-		if (Main.customers.length < 1) {
+		if (TSP.customers.length < 1) {
 			return;
 		}
 
 		repeatSteps = Integer.parseInt(repeatStepsValue.getValue().toString());
 
+		// stops the drone and edit mode if running
 		droneRunning = false;
 		startDrone.setText("Start Drone");
 		editMode = false;
@@ -280,33 +312,36 @@ public class ControlPanel extends JPanel {
 		bestAlgorithem.setText("");
 	}
 
+	// draws all the statistics and the outputed list
 	public void drawOutput() {
-		if (Main.bestPath.length < 1) {
+		if (TSP.bestPath.length < 1) {
 			return;
 		}
 
+		// used to add commas and round numbers
 		NumberFormat numFormat = NumberFormat.getInstance();
 		numFormat.setMaximumFractionDigits(0);
 		numFormat.setMinimumIntegerDigits(2);
 
-		double[] timeDistance = Map.calculateTimeDistance();
+		// displays both the angry minites and the total distance
+		double[] timeDistance = Algorithms.calculateTimeDistance();
 		punishment.setText("Angry Minutes: " + numFormat.format(timeDistance[0]));
 		distance.setText("Total distance: " + numFormat.format(timeDistance[1]) + "m");
 
+		// displays the output list for copy pasting
 		String outputResult = "";
-		for (int i = 0; i < Main.bestPath.length - 1; i++) {
-			outputResult += Main.customers[Main.bestPath[i]].id;
+		for (int i = 0; i < TSP.bestPath.length - 1; i++) {
+			outputResult += TSP.customers[TSP.bestPath[i]].id;
 			if (showAddress) {
-				outputResult += "(" + Main.customers[Main.bestPath[i]].address + ")";
+				outputResult += "(" + TSP.customers[TSP.bestPath[i]].address + ")";
 			}
 			outputResult += ",";
 		}
-
-		outputResult += Main.customers[Main.bestPath[Main.bestPath.length - 1]].id;
+		// last item in the list is seperate so it doesent have a comma at the end
+		outputResult += TSP.customers[TSP.bestPath[TSP.bestPath.length - 1]].id;
 		if (showAddress) {
-			outputResult += "(" + Main.customers[Main.bestPath[Main.bestPath.length - 1]].address + ")";
+			outputResult += "(" + TSP.customers[TSP.bestPath[TSP.bestPath.length - 1]].address + ")";
 		}
-
 		outputTextArea.setText(outputResult);
 	}
 }

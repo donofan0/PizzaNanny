@@ -8,9 +8,7 @@ import javax.swing.ListModel;
 import javax.swing.SwingWorker;
 
 public class Algorithms {
-	public final static String[] algorithms = { "Nearest Neighbor(Distance)", "Nearest Neighbor(Time)",
-			"Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "Group Aproximition", "Branch and Bound",
-			"All of the Above" };
+	public final static String[] algorithms = { "Nearest Neighbor(Distance)", "Nearest Neighbor(Time)", "Convex Hull(Distance)", "Convex Hull(Time)", "Largest Time", "Group Aproximition", "Branch and Bound", "All of the Above" };
 	public static boolean algorithemRunning = false;
 
 	public static String[] compareAlogrithemsWithResults() {
@@ -43,7 +41,7 @@ public class Algorithms {
 			numFormat.setMinimumIntegerDigits(2);
 			SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
 
-			double[] timeDistance = Map.calculateTimeDistance();
+			double[] timeDistance = calculateTimeDistance();
 			String hour = numFormat.format((int) ((timeDistance[1] / Map.driverSpeed) / 60));
 			String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
 
@@ -57,7 +55,7 @@ public class Algorithms {
 
 		calculateGroupAproximition(null);
 
-		if (Main.customers.length < 12) {
+		if (TSP.customers.length < 12) {
 			calculateBranchAndBound();
 		}
 
@@ -67,7 +65,7 @@ public class Algorithms {
 	public static int compareAlogrithems() {
 		int bestAlgorithem = 0;
 		double bestTime = 999999999;
-		int[][] algoritemsPaths = new int[algorithms.length - 3][Main.customers.length];
+		int[][] algoritemsPaths = new int[algorithms.length - 3][TSP.customers.length];
 		for (int i = 0; i < algorithms.length - 3; i++) {
 			switch (i) {
 			case 0:
@@ -90,19 +88,19 @@ public class Algorithms {
 				break;
 			}
 
-			double time = Map.calculateTime();
+			double time = calculateTime();
 			if (time < bestTime) {
 				bestAlgorithem = i;
 				bestTime = time;
 			}
 
-			algoritemsPaths[i] = Main.bestPath;
+			algoritemsPaths[i] = TSP.bestPath;
 		}
 
-		Main.bestPath = algoritemsPaths[bestAlgorithem];
+		TSP.bestPath = algoritemsPaths[bestAlgorithem];
 
 		calculateGroupAproximition(algoritemsPaths);
-		if (Main.customers.length < 12) {
+		if (TSP.customers.length < 12) {
 			calculateBranchAndBound();
 		}
 
@@ -110,78 +108,78 @@ public class Algorithms {
 	}
 
 	public static void calculateNearestNeighbor(boolean minimizeTime) {
-		Main.bestPath = new int[Main.customers.length];
-		Arrays.fill(Main.bestPath, -1);
+		TSP.bestPath = new int[TSP.customers.length];
+		Arrays.fill(TSP.bestPath, -1);
 
-		for (int i = -1; i < Main.customers.length - 1; i++) {
+		for (int i = -1; i < TSP.customers.length - 1; i++) {
 			int curCustomerIndex;
 			Point curCustomer;
 			if (i == -1) {
 				curCustomerIndex = -1;
 				curCustomer = Map.apachePizza;
 			} else {
-				curCustomerIndex = Main.bestPath[i];
-				curCustomer = Main.customers[curCustomerIndex].location;
+				curCustomerIndex = TSP.bestPath[i];
+				curCustomer = TSP.customers[curCustomerIndex].location;
 			}
 
 			int nextCus = -1;
 			double shortestDist = 999999999;
-			for (int j = 0; j < Main.customers.length; j++) {
+			for (int j = 0; j < TSP.customers.length; j++) {
 				if (curCustomerIndex == j) {
 					continue;
 				}
-				Customer customerNextPossibly = Main.customers[j];
+				Customer customerNextPossibly = TSP.customers[j];
 				double distance = curCustomer.distance(customerNextPossibly.location);
-				if (distance < shortestDist && !Map.bestPathContains(j)) {
+				if (distance < shortestDist && !ArrayUtils.pathContains(TSP.bestPath, j)) {
 					shortestDist = distance;
 					nextCus = j;
 				}
 			}
-			Main.bestPath[i + 1] = nextCus;
+			TSP.bestPath[i + 1] = nextCus;
 		}
 
 		ReworkBestPath(minimizeTime);
 	}
 
 	public static void calculateConvexHull(boolean minimizeTime) {
-		Main.bestPath = new int[Main.customers.length];
-		Arrays.fill(Main.bestPath, -1);
+		TSP.bestPath = new int[TSP.customers.length];
+		Arrays.fill(TSP.bestPath, -1);
 
-		// go to the heighest point
+		// go to the highest point
 		long lowestY = 999999999;
 		int lowestYIndex = -1;
-		for (int i = 0; i < Main.customers.length; i++) {
-			Point curPoint = Main.customers[i].location;
+		for (int i = 0; i < TSP.customers.length; i++) {
+			Point curPoint = TSP.customers[i].location;
 			if (curPoint.y < lowestY) {
 				lowestY = curPoint.y;
 				lowestYIndex = i;
 			}
 		}
-		Main.bestPath[0] = lowestYIndex;
+		TSP.bestPath[0] = lowestYIndex;
 
 		// makes a loop round the outside of the customer
 		for (int mode = 1; mode <= 4; mode++) {
-			for (int i = 0; i < Main.customers.length; i++) {
-				int curCustomerIndex = Main.bestPath[i];
-				Point curCustomer = Main.customers[curCustomerIndex].location;
+			for (int i = 0; i < TSP.customers.length; i++) {
+				int curCustomerIndex = TSP.bestPath[i];
+				Point curCustomer = TSP.customers[curCustomerIndex].location;
 				int leftMostIndex = calculateLeftMostPointIndex(curCustomer, mode);
 				if (leftMostIndex == -1) {
 					break;
 				}
-				Main.bestPath[i + 1] = leftMostIndex;
+				TSP.bestPath[i + 1] = leftMostIndex;
 			}
 		}
 
 		// connect the center point
-		for (int n = 0; n < Main.customers.length; n++) {
+		for (int n = 0; n < TSP.customers.length; n++) {
 			// finds the lowest point which is not connected
 			lowestY = 999999999;
 			lowestYIndex = -1;
-			for (int i = 0; i < Main.customers.length; i++) {
-				if (Map.bestPathContains(i)) {
+			for (int i = 0; i < TSP.customers.length; i++) {
+				if (ArrayUtils.pathContains(TSP.bestPath, i)) {
 					continue;
 				}
-				Point curPoint = Main.customers[i].location;
+				Point curPoint = TSP.customers[i].location;
 				if (curPoint.y < lowestY) {
 					lowestY = curPoint.y;
 					lowestYIndex = i;
@@ -195,10 +193,10 @@ public class Algorithms {
 			double bestTime = 999999999;
 			double bestDistance = 999999999;
 			int bestInsert = -1;
-			int[] currentPath = Map.trimPath(Main.bestPath);
+			int[] currentPath = ArrayUtils.trimPath(TSP.bestPath);
 			for (int i = 0; i < currentPath.length; i++) {
 				// calulates the cost if the point was inserted here
-				double[] timeDistance = Map.calculateTimeDistance(Map.pathInsert(currentPath, i, lowestYIndex));
+				double[] timeDistance = calculateTimeDistance(ArrayUtils.pathInsert(currentPath, i, lowestYIndex));
 				if (timeDistance[0] < bestTime && minimizeTime) {
 					bestTime = timeDistance[0];
 					bestInsert = i;
@@ -216,7 +214,7 @@ public class Algorithms {
 				System.out.println("!!Convex Algorithem Error, Calling Nearest Neighbor fallback");
 				return;
 			}
-			Main.bestPath = Map.bestPathInsert(bestInsert, lowestYIndex);
+			TSP.bestPath = ArrayUtils.bestPathInsert(bestInsert, lowestYIndex);
 		}
 
 		ReworkBestPath(minimizeTime);
@@ -224,20 +222,20 @@ public class Algorithms {
 	}
 
 	public static void calculateLargestTimeFirst() {
-		Main.bestPath = new int[Main.customers.length];
-		Arrays.fill(Main.bestPath, -1);
+		TSP.bestPath = new int[TSP.customers.length];
+		Arrays.fill(TSP.bestPath, -1);
 
-		for (int i = 0; i < Main.customers.length; i++) {
+		for (int i = 0; i < TSP.customers.length; i++) {
 			int largestTime = -1;
 			int largestTimeIndex = -1;
-			for (int j = 0; j < Main.customers.length; j++) {
-				Customer customer = Main.customers[j];
-				if (customer.waitTime > largestTime && !Map.bestPathContains(j)) {
+			for (int j = 0; j < TSP.customers.length; j++) {
+				Customer customer = TSP.customers[j];
+				if (customer.waitTime > largestTime && !ArrayUtils.pathContains(TSP.bestPath, j)) {
 					largestTime = customer.waitTime;
 					largestTimeIndex = j;
 				}
 			}
-			Main.bestPath[i] = largestTimeIndex;
+			TSP.bestPath[i] = largestTimeIndex;
 		}
 		ReworkBestPath(true);
 	}
@@ -255,19 +253,19 @@ public class Algorithms {
 				ControlPanel.groupAlgorithmRunning = true;
 
 				int groupSize = 1;
-				if (Main.customers.length > 60) {
+				if (TSP.customers.length > 60) {
 					groupSize = 10;
-				} else if (Main.customers.length > 50) {
+				} else if (TSP.customers.length > 50) {
 					groupSize = 10;
-				} else if (Main.customers.length >= 6) {
+				} else if (TSP.customers.length >= 6) {
 					groupSize = 6;
 				}
-				int numOfGroups = (int) Math.ceil((float) Main.customers.length / (float) groupSize);
+				int numOfGroups = (int) Math.ceil((float) TSP.customers.length / (float) groupSize);
 				maxIterations = Algorithms.calculateFactorial(numOfGroups);
 
-				Main.bestPath = new int[Main.customers.length];
-				for (int i = 0; i < Main.customers.length; i++) {
-					Main.bestPath[i] = i;
+				TSP.bestPath = new int[TSP.customers.length];
+				for (int i = 0; i < TSP.customers.length; i++) {
+					TSP.bestPath[i] = i;
 				}
 
 				int[][] groups = new int[numOfGroups][groupSize];
@@ -281,41 +279,41 @@ public class Algorithms {
 					while (groupsContains(groups, curCustomerIndex)) {
 						curCustomerIndex++;
 					}
-					Point curCustomer = Main.customers[curCustomerIndex].location;
+					Point curCustomer = TSP.customers[curCustomerIndex].location;
 
 					int[] group = new int[groupSize];
 					Arrays.fill(group, -1);
 					for (int a = 0; a < groupSize; a++) {
 						int closestCustomer = -1;
 						double shortestDist = 999999999;
-						for (int j = 0; j < Main.customers.length; j++) {
+						for (int j = 0; j < TSP.customers.length; j++) {
 							if (closestCustomer == j) {
 								continue;
 							}
-							Customer closestCustomerPossibly = Main.customers[j];
+							Customer closestCustomerPossibly = TSP.customers[j];
 							double distance = curCustomer.distance(closestCustomerPossibly.location);
-							if (distance < shortestDist && !Map.pathContains(group, j) && !groupsContains(groups, j)) {
+							if (distance < shortestDist && !ArrayUtils.pathContains(group, j) && !groupsContains(groups, j)) {
 								shortestDist = distance;
 								closestCustomer = j;
 							}
 						}
 						group[a] = closestCustomer;
 					}
-					groups[i] = Arrays.copyOf(calculateBranchAndBound(Map.trimPath(group)), Map.trimPath(group).length);
+					groups[i] = Arrays.copyOf(calculateBranchAndBound(ArrayUtils.trimPath(group)), ArrayUtils.trimPath(group).length);
 				}
 
 				double bestTime = 999999999;
 				int localBestGroup = -1;
-				int[] localBestPath = new int[Main.customers.length];
+				int[] localBestPath = new int[TSP.customers.length];
 				int[] permitation = new int[numOfGroups];
 				Arrays.fill(permitation, -1);
-				if (Main.customers.length > 60) {
+				if (TSP.customers.length > 60) {
 					for (int i = 0; i < numOfGroups; i++) {
 						bestTime = -1;
 						for (int groupIndex = 0; groupIndex < numOfGroups; groupIndex++) {
 							int[] group = groups[groupIndex];
-							float time = (float) Map.calculateTime(group);
-							if (time > bestTime && !Map.pathContains(permitation, groupIndex)) {
+							float time = (float) calculateTime(group);
+							if (time > bestTime && !ArrayUtils.pathContains(permitation, groupIndex)) {
 								bestTime = time;
 								localBestGroup = groupIndex;
 							}
@@ -323,18 +321,18 @@ public class Algorithms {
 						permitation[i] = localBestGroup;
 					}
 
-					int[] path = new int[Main.customers.length];
+					int[] path = new int[TSP.customers.length];
 					for (int groupIndex = 0; groupIndex < numOfGroups; groupIndex++) {
 						int group = permitation[groupIndex];
 						for (int point = 0; point < groups[group].length; point++) {
-							if (groupIndex * groupSize + point > Main.customers.length - 1) {
+							if (groupIndex * groupSize + point > TSP.customers.length - 1) {
 								break;
 							}
 							path[groupIndex * groupSize + point] = groups[group][point];
 						}
 					}
 
-					Main.bestPath = path;
+					TSP.bestPath = path;
 
 					ReworkBestPath(true);
 					return true;
@@ -343,17 +341,17 @@ public class Algorithms {
 				for (int i = 0; i < permitation.length; i++) {
 					permitation[i] = i;
 				}
-				int[] path = new int[Main.customers.length];
+				int[] path = new int[TSP.customers.length];
 				for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
 					int group = permitation[groupIndex];
 					for (int point = 0; point < groups[group].length; point++) {
-						if (groupIndex * groupSize + point > Main.customers.length - 1) {
+						if (groupIndex * groupSize + point > TSP.customers.length - 1) {
 							break;
 						}
 						path[groupIndex * groupSize + point] = groups[group][point];
 					}
 				}
-				double time = Map.calculateTime(path);
+				double time = calculateTime(path);
 				if (time < bestTime) {
 					bestTime = time;
 					localBestPath = Arrays.copyOf(path, path.length);
@@ -378,7 +376,7 @@ public class Algorithms {
 						i = 0;
 						count++;
 
-						path = new int[Main.customers.length];
+						path = new int[TSP.customers.length];
 						int currentPathIndex = 0;
 						for (int groupIndex = 0; groupIndex < permitation.length; groupIndex++) {
 							int group = permitation[groupIndex];
@@ -387,7 +385,7 @@ public class Algorithms {
 								currentPathIndex++;
 							}
 						}
-						time = Map.calculateTime(path);
+						time = calculateTime(path);
 						if (time < bestTime) {
 							bestTime = time;
 							localBestPath = Arrays.copyOf(path, path.length);
@@ -399,7 +397,7 @@ public class Algorithms {
 					}
 				}
 
-				Main.bestPath = localBestPath;
+				TSP.bestPath = localBestPath;
 
 				ReworkBestPath(true);
 				return true;
@@ -438,16 +436,16 @@ public class Algorithms {
 						numFormat.setMinimumIntegerDigits(2);
 						SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
 
-						double[] timeDistance = Map.calculateTimeDistance();
+						double[] timeDistance = calculateTimeDistance();
 						String hour = numFormat.format((int) ((timeDistance[1] / Map.driverSpeed) / 60));
 						String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
 
-						data[data.length - 1] = convertToTable(algorithms[algorithms.length - 3], 28);
-						data[data.length - 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
-						data[data.length - 1] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
-						data[data.length - 1] += convertToTable(hour + ":" + min, 21);
-						data[data.length - 1] += convertToTable(timeFromat.format(currentTime - startTime), 28);
-						data[data.length - 1] += "|";
+						data[6] = convertToTable(algorithms[algorithms.length - 3], 28);
+						data[6] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
+						data[6] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
+						data[6] += convertToTable(hour + ":" + min, 21);
+						data[6] += convertToTable(timeFromat.format(currentTime - startTime), 28);
+						data[6] += "|";
 
 						Gui.algCompare.setListData(data);
 					}
@@ -457,14 +455,14 @@ public class Algorithms {
 					double bestTime = 999999999;
 					int bestAlg = -1;
 					for (int i = 0; i < algoritemsPaths.length; i++) {
-						double time = Map.calculateTime(algoritemsPaths[i]);
+						double time = calculateTime(algoritemsPaths[i]);
 						if (time < bestTime) {
 							bestTime = time;
 							bestAlg = i;
 						}
 					}
-					if (Map.calculateTime() > bestTime) {
-						Main.bestPath = algoritemsPaths[bestAlg];
+					if (calculateTime() > bestTime) {
+						TSP.bestPath = algoritemsPaths[bestAlg];
 					} else {
 						ControlPanel.bestAlgorithem.setText("Best: " + algorithms[algorithms.length - 3]);
 					}
@@ -495,18 +493,18 @@ public class Algorithms {
 				}
 				ControlPanel.branchAlgorithmRunning = true;
 
-				maxIterations = Algorithms.calculateFactorial(Main.customers.length);
+				maxIterations = Algorithms.calculateFactorial(TSP.customers.length);
 
-				Main.bestPath = new int[Main.customers.length];
+				TSP.bestPath = new int[TSP.customers.length];
 
-				int[] path = new int[Main.customers.length];
-				for (int i = 0; i < Main.customers.length; i++) {
+				int[] path = new int[TSP.customers.length];
+				for (int i = 0; i < TSP.customers.length; i++) {
 					path[i] = i;
-					Main.bestPath[i] = i;
+					TSP.bestPath[i] = i;
 				}
 				bestTime = calculateTimeUpTo(path, 999999999, true);
 
-				int[] swapWith = new int[Main.customers.length];
+				int[] swapWith = new int[TSP.customers.length];
 				int i = 0;
 				long count = 0;
 				while (i < swapWith.length && ControlPanel.branchAlgorithmRunning) {
@@ -524,7 +522,7 @@ public class Algorithms {
 						float time = calculateTimeUpTo(path, bestTime, true);
 						if (time < bestTime) {
 							for (int j = 0; j < path.length; j++) {
-								Main.bestPath[j] = path[j];
+								TSP.bestPath[j] = path[j];
 							}
 							bestTime = time;
 						}
@@ -580,16 +578,16 @@ public class Algorithms {
 						numFormat.setMinimumIntegerDigits(2);
 						SimpleDateFormat timeFromat = new SimpleDateFormat("mm:ss:SSS");
 
-						double[] timeDistance = Map.calculateTimeDistance();
+						double[] timeDistance = calculateTimeDistance();
 						String hour = numFormat.format((int) ((timeDistance[1] / Map.driverSpeed) / 60));
 						String min = numFormat.format((timeDistance[1] / Map.driverSpeed) % 60);
 
-						data[data.length - 1] = convertToTable(algorithms[algorithms.length - 2], 28);
-						data[data.length - 1] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
-						data[data.length - 1] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
-						data[data.length - 1] += convertToTable(hour + ":" + min, 21);
-						data[data.length - 1] += convertToTable(timeFromat.format(currentTime - startTime), 28);
-						data[data.length - 1] += "|";
+						data[7] = convertToTable(algorithms[algorithms.length - 2], 28);
+						data[7] += convertToTable(numFormat.format(timeDistance[1]) + "m", 10);
+						data[7] += convertToTable(numFormat.format(timeDistance[0]) + " min", 12);
+						data[7] += convertToTable(hour + ":" + min, 21);
+						data[7] += convertToTable(timeFromat.format(currentTime - startTime), 28);
+						data[7] += "|";
 
 						Gui.algCompare.setListData(data);
 					}
@@ -642,7 +640,7 @@ public class Algorithms {
 
 	private static boolean groupsContains(int[][] groups, int value) {
 		for (int i = 0; i < groups.length; i++) {
-			if (Map.pathContains(groups[i], value)) {
+			if (ArrayUtils.pathContains(groups[i], value)) {
 				return true;
 			}
 		}
@@ -657,7 +655,7 @@ public class Algorithms {
 
 		if (includeApache) {
 			start = Map.apachePizza;
-			endCustomer = Main.customers[path[0]];
+			endCustomer = TSP.customers[path[0]];
 
 			lastDistance = (float) start.distance(endCustomer.location);
 
@@ -668,8 +666,8 @@ public class Algorithms {
 		}
 
 		for (int i = 1; i < path.length; i++) {
-			start = Main.customers[path[i - 1]].location;
-			endCustomer = Main.customers[path[i]];
+			start = TSP.customers[path[i - 1]].location;
+			endCustomer = TSP.customers[path[i]];
 
 			lastDistance += (float) start.distance(endCustomer.location);
 
@@ -697,15 +695,15 @@ public class Algorithms {
 
 	private static void ReworkBestPath(boolean minimizeTime) {
 		for (int repeat = 0; repeat < ControlPanel.repeatSteps; repeat++) {
-			for (int n = 0; n < Main.customers.length; n++) {
+			for (int n = 0; n < TSP.customers.length; n++) {
 				// connects this point to the circle
-				Map.bestPathRemove(n);
+				ArrayUtils.bestPathRemove(n);
 				double bestTime = 999999999;
 				double bestDistance = 999999999;
 				int bestInsert = -1;
-				for (int i = 0; i < Main.bestPath.length + 1; i++) {
+				for (int i = 0; i < TSP.bestPath.length + 1; i++) {
 					// calulates the cost if the point was inserted here
-					double[] timeDistance = Map.calculateTimeDistance(Map.bestPathInsert(i, n));
+					double[] timeDistance = calculateTimeDistance(ArrayUtils.pathInsert(TSP.bestPath, i, n));
 					if (timeDistance[0] < bestTime && minimizeTime) {
 						bestTime = timeDistance[0];
 						bestInsert = i;
@@ -717,7 +715,7 @@ public class Algorithms {
 						bestInsert = i;
 					}
 				}
-				Main.bestPath = Map.bestPathInsert(bestInsert, n);
+				TSP.bestPath = ArrayUtils.pathInsert(TSP.bestPath, bestInsert, n);
 			}
 		}
 	}
@@ -728,11 +726,11 @@ public class Algorithms {
 		if (mode == 2) {
 			LeftMostPointVal = 0;
 		}
-		for (int i = 0; i < Main.customers.length; i++) {
-			if (Map.bestPathContains(i)) {
+		for (int i = 0; i < TSP.customers.length; i++) {
+			if (ArrayUtils.pathContains(TSP.bestPath, i)) {
 				continue;
 			}
-			Point curPoint = Main.customers[i].location;
+			Point curPoint = TSP.customers[i].location;
 			double slope = Map.calculateSlope(start, curPoint);
 			switch (mode) {
 			case 1:
@@ -791,5 +789,69 @@ public class Algorithms {
 		}
 
 		return output;
+	}
+
+	/*
+	 * Algorithm Utilities
+	 */
+
+	public static float calculateTimeWaiting(Customer curCustomer, int pathIndex) {
+		if (TSP.bestPath.length < 1 || pathIndex < 0) {
+			return -1;
+		}
+
+		double[] distances = CalculateTotalDistance(ArrayUtils.pathSubList(TSP.bestPath, pathIndex + 1));
+		float time = (float) (distances[distances.length - 1] / Map.driverSpeed) + curCustomer.waitTime;
+		return time;
+	}
+
+	public static double calculateTime(int[] path) {
+		return calculateTimeDistance(path)[0];
+	}
+
+	public static double calculateTime() {
+		return calculateTimeDistance(TSP.bestPath)[0];
+	}
+
+	// returns an array of where element 1 is the time late and element 2 is the
+	// total distance of the path
+	public static double[] calculateTimeDistance(int[] path) {
+		double[] distances = CalculateTotalDistance(path);
+
+		double lateMins = 0;
+		for (int i = 0; i < path.length; i++) {
+			Customer endCustomer = TSP.customers[path[i]];
+			double time = (distances[i] / Map.driverSpeed) + endCustomer.waitTime;
+			if (time > 30) {
+				lateMins += time - 30;
+			}
+		}
+
+		double[] output = { lateMins, distances[distances.length - 1] };
+		return output;
+	}
+
+	public static double[] calculateTimeDistance() {
+		return calculateTimeDistance(TSP.bestPath);
+	}
+
+	public static double[] CalculateTotalDistance(int[] path) {
+		double[] distances = new double[path.length];
+		for (int i = 0; i < path.length; i++) {
+			Customer endCustomer = TSP.customers[path[i]];
+			Point start = Map.apachePizza;
+			Point end = endCustomer.location;
+			if (i != 0) {
+				start = TSP.customers[path[i - 1]].location;
+				end = TSP.customers[path[i]].location;
+			}
+			double distance = start.distance(end);
+			if (i == 0) {
+				distances[i] = distance;
+			} else {
+				distances[i] = distance + distances[i - 1];
+			}
+		}
+		return distances;
 	}
 }
