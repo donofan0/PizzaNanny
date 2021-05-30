@@ -34,7 +34,7 @@ public class Gui {
 
 	private final int ctrlWidth = 180;
 	private final int inputBoxHeight = 200;
-	private static final Dimension windowSize = new Dimension(1000, 890);
+	private static final Dimension windowSize = new Dimension(890, 800);
 
 	private static JFrame generatorFrame;
 	private static JFrame compareFrame;
@@ -43,7 +43,7 @@ public class Gui {
 	private static JSpinner standDeviationValue;
 
 	public Gui() {
-		final JFrame frame = new JFrame("Draw Graph");
+		final JFrame frame = new JFrame("PizzaNanny");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.pack();
 		frame.setSize(windowSize);
@@ -60,8 +60,7 @@ public class Gui {
 		inputTextArea = new JTextArea();
 		final JScrollPane inputDeliverys = new JScrollPane(inputTextArea);
 		inputDeliverys.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		inputDeliverys.setBounds(new Rectangle(0, frameSize.height - inputBoxHeight, frameSize.width - ctrlWidth,
-				inputBoxHeight));
+		inputDeliverys.setBounds(new Rectangle(0, frameSize.height - inputBoxHeight, frameSize.width - ctrlWidth, inputBoxHeight));
 
 		frame.getContentPane().add(ctrlPanel);
 		frame.getContentPane().add(inputDeliverys);
@@ -75,12 +74,10 @@ public class Gui {
 
 				// move the input text box and the control panel to there new place
 				ctrlPanel.setBounds(new Rectangle(frameSize.width - ctrlWidth, 0, ctrlWidth, frameSize.height));
-				inputDeliverys.setBounds(new Rectangle(0, frameSize.height - inputBoxHeight,
-						frameSize.width - ctrlWidth, inputBoxHeight));
+				inputDeliverys.setBounds(new Rectangle(0, frameSize.height - inputBoxHeight, frameSize.width - ctrlWidth, inputBoxHeight));
 
 				// resizes the map to its new size and adjusts its scale factor
-				Rectangle mapDemensions = new Rectangle(0, 0, frameSize.width - ctrlWidth,
-						frameSize.height - inputBoxHeight);
+				Rectangle mapDemensions = new Rectangle(0, 0, frameSize.width - ctrlWidth, frameSize.height - inputBoxHeight);
 				map.reSizeMap(mapDemensions);
 
 				frame.validate();
@@ -153,8 +150,7 @@ public class Gui {
 		algCompare.addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
-				if (e.getValueIsAdjusting() || ControlPanel.branchAlgorithmRunning
-						|| ControlPanel.groupAlgorithmRunning) {
+				if (e.getValueIsAdjusting() || ControlPanel.branchAlgorithmRunning || ControlPanel.groupAlgorithmRunning) {
 					return;
 				}
 
@@ -311,8 +307,7 @@ public class Gui {
 						}
 
 						// types the results in the input box
-						inputTextArea.setText(inputTextArea.getText() + "" + (j + i * (maxPoints / numOfClusters) + 1)
-								+ ",This is a test address ," + time + "," + y + "," + x + "\n");
+						inputTextArea.setText(inputTextArea.getText() + "" + (j + i * (maxPoints / numOfClusters) + 1) + ",This is a test address ," + time + "," + y + "," + x + "\n");
 					}
 				}
 

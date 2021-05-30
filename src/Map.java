@@ -259,7 +259,7 @@ class Drone extends JPanel {
 	 */
 	private static final long serialVersionUID = 2255340493176749645L;
 
-	final int droneSpeedScale = 200; // the drone runs at 200 times real speed
+	final int droneSpeedScale = 100; // the drone runs at 100 times real speed
 	JLabel drone;
 
 	// starts drone
@@ -275,8 +275,7 @@ class Drone extends JPanel {
 		drone.setVisible(true);
 
 		// calls the asynchronous recursive animation routine
-		doAnimation(new Rectangle2D.Double(start.x * Map.scaleFactor - 30, start.y * Map.scaleFactor - 30, 60, 60), new Point2D.Double(end.x * Map.scaleFactor - 30,
-				end.y * Map.scaleFactor - 30), start.distance(end), 0);
+		doAnimation(new Rectangle2D.Double(start.x * Map.scaleFactor - 30, start.y * Map.scaleFactor - 30, 60, 60), new Point2D.Double(end.x * Map.scaleFactor - 30, end.y * Map.scaleFactor - 30), start.distance(end), 0);
 	}
 
 	// asynchronous recursive routine which will start the drone at start
@@ -350,11 +349,10 @@ class Drone extends JPanel {
 			@Override
 			protected void process(List<Rectangle2D.Double> chunks) {
 				/*
-				 * sets the label to its new coordinates and size this is called in batches as
-				 * for example it could execute like this
-				 * doInBackground,doInBackground,doInBackground,doInBackground, process,
-				 * process,doInBackground, process, process, process that is why it has to get
-				 * the next item in the list
+				 * sets the label to its new coordinates and size this is called in batches as for example it could
+				 * execute like this doInBackground,doInBackground,doInBackground,doInBackground, process,
+				 * process,doInBackground, process, process, process that is why it has to get the next item in the
+				 * list
 				 */
 				Rectangle2D.Double val = (java.awt.geom.Rectangle2D.Double) chunks.get(chunks.size() - 1);
 				drone.setBounds(val.getBounds());
